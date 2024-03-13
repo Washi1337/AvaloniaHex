@@ -1,0 +1,96 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:avaloniaHex="clr-namespace:AvaloniaHex;assembly=AvaloniaHex"
+        xmlns:rendering="clr-namespace:AvaloniaHex.Rendering;assembly=AvaloniaHex"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        Width="1600"
+        Height="900"
+        x:Class="AvaloniaHex.Demo.MainWindow"
+        Title="AvaloniaHex.Demo">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="MainBorderBrush" Color="LightGray"/>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="MainBorderBrush" Color="#505050"/>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <DockPanel>
+        <Menu
+            DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open" Click="OpenOnClick" HotKey="Ctrl+O" InputGesture="Ctrl+O"/>
+                <MenuItem Header="_Save" Click="SaveOnClick" HotKey="Ctrl+S" InputGesture="Ctrl+S"/>
+                <MenuItem Header="Save _As" Click="SaveAsOnClick" HotKey="Ctrl+S" InputGesture="Ctrl+Shift+S"/>
+            </MenuItem>
+            <MenuItem Header="_View">
+                <MenuItem Header="Toggle _Uppercase" Click="UppercaseOnClick"/>
+                <MenuItem Header="Theme">
+                    <MenuItem Header="Light" Click="LightThemeOnClick"/>
+                    <MenuItem Header="Dark" Click="DarkThemeOnClick"/>
+                </MenuItem>
+                <MenuItem Header="Font Size">
+                    <MenuItem Header="10" Click="FontSizeOnClick" CommandParameter="10"/>
+                    <MenuItem Header="11" Click="FontSizeOnClick" CommandParameter="11"/>
+                    <MenuItem Header="12" Click="FontSizeOnClick" CommandParameter="12"/>
+                    <MenuItem Header="14" Click="FontSizeOnClick" CommandParameter="14"/>
+                    <MenuItem Header="20" Click="FontSizeOnClick" CommandParameter="20"/>
+                    <MenuItem Header="24" Click="FontSizeOnClick" CommandParameter="24"/>
+                </MenuItem>
+                <MenuItem Header="Bytes Per Line">
+                    <MenuItem Header="Adjust to Width" Click="AdjustOnClick"/>
+                    <Separator />
+                    <MenuItem Header="8"  Click="AdjustOnClick" CommandParameter="8"/>
+                    <MenuItem Header="16" Click="AdjustOnClick" CommandParameter="16"/>
+                    <MenuItem Header="24" Click="AdjustOnClick" CommandParameter="24"/>
+                    <MenuItem Header="32" Click="AdjustOnClick" CommandParameter="32"/>
+                    <MenuItem Header="64" Click="AdjustOnClick" CommandParameter="64"/>
+                </MenuItem>
+                <MenuItem Header="Columns">
+                    <MenuItem Header="Offset" Click="OffsetOnClick" />
+                    <MenuItem Header="Hex" Click="HexOnClick" />
+                    <MenuItem Header="Binary" Click="BinaryOnClick" />
+                    <MenuItem Header="ASCII" Click="AsciiOnClick" />
+                </MenuItem>
+                <MenuItem Header="Highlighting">
+                    <MenuItem Header="Changes" Click="ChangesOnClick"/>
+                    <MenuItem Header="Zeroes" Click="ZeroesOnClick"/>
+                </MenuItem>
+            </MenuItem>
+        </Menu>
+
+        <StackPanel
+            DockPanel.Dock="Bottom"
+            Orientation="Horizontal">
+            <Label x:Name="StatusLabel"/>
+        </StackPanel>
+
+        <avaloniaHex:HexEditor
+            x:Name="MainHexEditor"
+            BorderBrush="{DynamicResource MainBorderBrush}"
+            BorderThickness="1"
+            FontSize="14"
+            ColumnPadding="30"
+            FontFamily="Cascadia Code,JetBrains Mono,Monospace,monospace">
+            <avaloniaHex:HexEditor.Columns>
+                <rendering:OffsetColumn />
+                <rendering:HexColumn />
+                <rendering:BinaryColumn IsVisible="False" />
+                <rendering:AsciiColumn />
+            </avaloniaHex:HexEditor.Columns>
+            <avaloniaHex:HexEditor.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Copy" Click="CopyOnClick"/>
+                </ContextMenu>
+            </avaloniaHex:HexEditor.ContextMenu>
+        </avaloniaHex:HexEditor>
+
+    </DockPanel>
+</Window>

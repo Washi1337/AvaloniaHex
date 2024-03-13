@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Title>AvaloniaHex</Title>
+        <Description>A hex editor control for the Avalonia UI framework.</Description>
+        <PackageTags>avalonia ui hex editor binary data visualizr</PackageTags>
+        <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <DocumentationFile>bin\Debug\net6.0\AvaloniaHex.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DocumentationFile>bin\Release\net6.0\AvaloniaHex.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Avalonia" Version="11.0.10" />
+      <PackageReference Include="Avalonia.ReactiveUI" Version="11.0.10" />
+    </ItemGroup>
+
+</Project>

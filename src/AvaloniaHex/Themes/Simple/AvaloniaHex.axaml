@@ -1,0 +1,77 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:rendering="clr-namespace:AvaloniaHex.Rendering"
+        xmlns:avaloniaHex="clr-namespace:AvaloniaHex"
+        xmlns:editing="clr-namespace:AvaloniaHex.Editing">
+    <Styles.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="HexForegroundBase" Color="Black" />
+                    <SolidColorBrush x:Key="OffsetForeground" Color="Blue"/>
+
+                    <SolidColorBrush x:Key="PrimarySelectionBackground" Color="{DynamicResource HighlightColor}" Opacity="0.4" />
+                    <SolidColorBrush x:Key="SecondarySelectionBackground" Color="{DynamicResource HighlightColor}" Opacity="0.2" />
+                    <SolidColorBrush x:Key="PrimaryCaretBackground" Color="Black" Opacity="0.3" />
+                    <SolidColorBrush x:Key="SecondaryCaretBackground" Color="Black" Opacity="0.3" />
+                    <SolidColorBrush x:Key="CurrentLineBackground" Color="Gray" Opacity="0.1"/>
+
+                    <Pen x:Key="PrimarySelectionBorder" Brush="{DynamicResource HighlightColor}" />
+                    <Pen x:Key="SecondarySelectionBorder" Brush="{DynamicResource HighlightColor}" />
+                    <Pen x:Key="PrimaryCaretBorder" Brush="Black" />
+                    <Pen x:Key="SecondaryCaretBorder" Brush="Black" />
+                    <Pen x:Key="CurrentLineBorder" Brush="LightGray" Thickness="1"/>
+                </ResourceDictionary>
+
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="HexForegroundBase" Color="Gray" />
+                    <SolidColorBrush x:Key="OffsetForeground" Color="DarkCyan"/>
+
+                    <SolidColorBrush x:Key="PrimarySelectionBackground" Color="{DynamicResource HighlightColor}" Opacity="0.4" />
+                    <SolidColorBrush x:Key="SecondarySelectionBackground" Color="{DynamicResource HighlightColor}" Opacity="0.2" />
+                    <SolidColorBrush x:Key="PrimaryCaretBackground" Color="Magenta" Opacity="0.3" />
+                    <SolidColorBrush x:Key="SecondaryCaretBackground" Color="DarkMagenta" Opacity="0.5" />
+                    <SolidColorBrush x:Key="CurrentLineBackground" Color="Gray" Opacity="0.1"/>
+
+                    <Pen x:Key="PrimarySelectionBorder" Brush="{DynamicResource HighlightColor}" />
+                    <Pen x:Key="SecondarySelectionBorder" Brush="{DynamicResource HighlightColor}" />
+                    <Pen x:Key="PrimaryCaretBorder" Brush="Magenta" />
+                    <Pen x:Key="SecondaryCaretBorder" Brush="DarkMagenta" />
+                    <Pen x:Key="CurrentLineBorder" Brush="DimGray" Thickness="1"/>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="../Base.axaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Styles.Resources>
+
+    <Style Selector="avaloniaHex|HexEditor">
+        <Setter Property="Foreground" Value="{DynamicResource HexForegroundBase}"/>
+        <Setter Property="ColumnPadding" Value="20"/>
+    </Style>
+
+    <Style Selector="rendering|OffsetColumn">
+        <Setter Property="Foreground" Value="{DynamicResource OffsetForeground}"/>
+    </Style>
+
+    <Style Selector="editing|CurrentLineLayer">
+        <Setter Property="CurrentLineBackground" Value="{DynamicResource CurrentLineBackground}"/>
+        <Setter Property="CurrentLineBorder" Value="{DynamicResource CurrentLineBorder}"/>
+    </Style>
+
+    <Style Selector="editing|CaretLayer">
+        <Setter Property="PrimaryColumnBackground" Value="{DynamicResource PrimaryCaretBackground}"/>
+        <Setter Property="PrimaryColumnBorder" Value="{DynamicResource PrimaryCaretBorder}"/>
+        <Setter Property="SecondaryColumnBackground" Value="{DynamicResource SecondaryCaretBackground}"/>
+        <Setter Property="SecondaryColumnBorder" Value="{DynamicResource SecondaryCaretBorder}"/>
+    </Style>
+
+    <Style Selector="editing|SelectionLayer">
+        <Setter Property="PrimarySelectionBackground" Value="{DynamicResource PrimarySelectionBackground}"/>
+        <Setter Property="PrimarySelectionBorder" Value="{DynamicResource PrimarySelectionBorder}"/>
+        <Setter Property="SecondarySelectionBackground" Value="{DynamicResource SecondarySelectionBackground}"/>
+        <Setter Property="SecondarySelectionBorder" Value="{DynamicResource SecondarySelectionBorder}"/>
+    </Style>
+</Styles>

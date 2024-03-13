@@ -1,0 +1,26 @@
+<ResourceDictionary 
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:avaloniaHex="clr-namespace:AvaloniaHex"
+    x:ClassModifier="internal">
+    
+    <ControlTheme x:Key="{x:Type avaloniaHex:HexEditor}" TargetType="avaloniaHex:HexEditor">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}">
+                    <ScrollViewer 
+                        Focusable="False"
+                        Name="PART_ScrollViewer"
+                        VerticalScrollBarVisibility="{TemplateBinding VerticalScrollBarVisibility}"
+                        HorizontalScrollBarVisibility="{TemplateBinding HorizontalScrollBarVisibility}"
+                        VerticalContentAlignment="Top"
+                        HorizontalContentAlignment="Left"
+                        Padding="{TemplateBinding Padding}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+</ResourceDictionary>

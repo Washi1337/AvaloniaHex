@@ -1,0 +1,14 @@
+<Project>
+
+    <PropertyGroup>
+        <Copyright>Copyright © Washi 2024</Copyright>
+        <PackageProjectUrl>https://github.com/Washi1337/AvaloniaHex</PackageProjectUrl>
+        <PackageLicense>https://github.com/Washi1337/AvaloniaHex/LICENSE.md</PackageLicense>
+        <RepositoryUrl>https://github.com/Washi1337/AvaloniaHex</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <LangVersion>10</LangVersion>
+        <Version>0.1.0</Version>
+        <Deterministic>true</Deterministic>
+    </PropertyGroup>
+
+</Project>
