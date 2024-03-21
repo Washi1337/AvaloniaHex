@@ -14,6 +14,12 @@ This is a(n experimental) hex editor control for the [Avalonia](https://github.c
 - Custom byte ranges highlighting.
 
 
+## Binaries
+
+- Stable: [NuGet](https://www.nuget.org/packages/AvaloniaHex)
+- Nightly: [AppVeyor](https://ci.appveyor.com/project/Washi1337/asmresolver/build/AvaloniaHex)
+
+
 ## Quick Start Guide
 
 After installing the `AvaloniaHex` dependency, add the default control styles to your `App.axaml`:
