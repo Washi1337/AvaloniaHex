@@ -17,7 +17,7 @@ This is a(n experimental) hex editor control for the [Avalonia](https://github.c
 ## Binaries
 
 - Stable: [NuGet](https://www.nuget.org/packages/AvaloniaHex)
-- Nightly: [AppVeyor](https://ci.appveyor.com/project/Washi1337/asmresolver/build/AvaloniaHex)
+- Nightly: [AppVeyor](https://ci.appveyor.com/project/Washi1337/avaloniahex/build/artifacts)
 
 
 ## Quick Start Guide
