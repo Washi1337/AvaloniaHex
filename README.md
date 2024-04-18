@@ -10,6 +10,7 @@ This is a(n experimental) hex editor control for the [Avalonia](https://github.c
 - Display binary data in hex, binary and ASCII.
 - Adjust the displayed bytes per line manually or automatically.
 - Modify binary documents in-place.
+- Specify invalid or inaccessible ranges. Useful for documents with "gaps" (e.g., memory views).
 - Many style customization options available with default Light and Dark themes.
 - Custom byte ranges highlighting.
 

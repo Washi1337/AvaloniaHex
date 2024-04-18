@@ -21,21 +21,20 @@ public abstract class ByteHighlighter : ILineTransformer
     /// <summary>
     /// Determines whether the provided location is highlighted or not.
     /// </summary>
+    /// <param name="hexView"></param>
     /// <param name="line"></param>
     /// <param name="location"></param>
     /// <returns></returns>
-    protected abstract bool IsHighlighted(VisualBytesLine line, BitLocation location);
+    protected abstract bool IsHighlighted(HexView hexView, VisualBytesLine line, BitLocation location);
 
     /// <inheritdoc />
-    public void Transform(VisualBytesLine line)
+    public void Transform(HexView hexView, VisualBytesLine line)
     {
         for (int i = 0; i < line.Segments.Count; i++)
-        {
-            ColorizeSegment(line, ref i);
-        }
+            ColorizeSegment(hexView, line, ref i);
     }
 
-    private void ColorizeSegment(VisualBytesLine line, ref int index)
+    private void ColorizeSegment(HexView hexView, VisualBytesLine line, ref int index)
     {
         var originalSegment = line.Segments[index];
 
@@ -46,7 +45,7 @@ public abstract class ByteHighlighter : ILineTransformer
         {
             var currentLocation = new BitLocation(originalSegment.Range.Start.ByteIndex + j);
 
-            bool shouldSplit = IsHighlighted(line, currentLocation) ? !isInModifiedRange : isInModifiedRange;
+            bool shouldSplit = IsHighlighted(hexView, line, currentLocation) ? !isInModifiedRange : isInModifiedRange;
             if (!shouldSplit)
                 continue;
 

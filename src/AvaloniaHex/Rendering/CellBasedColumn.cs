@@ -1,5 +1,4 @@
 using Avalonia;
-using Avalonia.Input;
 using Avalonia.Media.TextFormatting;
 using AvaloniaHex.Document;
 using AvaloniaHex.Editing;
@@ -57,6 +56,21 @@ public abstract class CellBasedColumn : Column
     public override double Width => base.Width + WordCount * WordWidth + (WordCount - 1) * GroupPadding;
 
     /// <summary>
+    /// Defines the <see cref="InvalidCellChar"/> property.
+    /// </summary>
+    public static readonly StyledProperty<char> InvalidCellCharProperty =
+        AvaloniaProperty.Register<CellBasedColumn, char>(nameof(InvalidCellChar), '?');
+
+    /// <summary>
+    /// Gets or sets the character that is used for displaying invalid or inaccessible cells.
+    /// </summary>
+    public char InvalidCellChar
+    {
+        get => GetValue(InvalidCellCharProperty);
+        set => SetValue(InvalidCellCharProperty, value);
+    }
+
+    /// <summary>
     /// Preprocesses the provided text input for insertion into the column.
     /// </summary>
     /// <param name="input">The input text to process.</param>
@@ -108,6 +122,11 @@ public abstract class CellBasedColumn : Column
         var newLocation = location;
         for (int i = 0; i < input.Length; i++)
         {
+            // Are we a valid cell in the document?
+            if (!document.ValidRanges.IsSuperSetOf(new BitRange(newLocation, newLocation.AddBits((ulong) BitsPerCell))))
+                return false;
+
+            // Try handling the textual input according to the column's string format.
             if (!TryWriteCell(data, location, newLocation, input[i]))
                 return false;
 

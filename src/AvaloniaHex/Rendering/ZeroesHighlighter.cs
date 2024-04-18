@@ -8,8 +8,8 @@ namespace AvaloniaHex.Rendering;
 public class ZeroesHighlighter : ByteHighlighter
 {
     /// <inheritdoc />
-    protected override bool IsHighlighted(VisualBytesLine line, BitLocation location)
+    protected override bool IsHighlighted(HexView hexView, VisualBytesLine line, BitLocation location)
     {
-        return line.GetByteAtAbsolute(location.ByteIndex) == 0;
+        return hexView.Document!.ValidRanges.Contains(location) && line.GetByteAtAbsolute(location.ByteIndex) == 0;
     }
 }

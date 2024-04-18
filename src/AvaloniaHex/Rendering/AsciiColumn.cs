@@ -1,8 +1,6 @@
-using System.Text;
 using Avalonia;
 using Avalonia.Media.TextFormatting;
 using AvaloniaHex.Document;
-using AvaloniaHex.Editing;
 
 namespace AvaloniaHex.Rendering;
 
@@ -45,7 +43,7 @@ public class AsciiColumn : CellBasedColumn
         HexView.Document.ReadBytes(range.Start.ByteIndex, data);
 
         char[] output = new char[data.Length];
-        GetText(data, output);
+        GetText(data, range, output);
 
         return new string(output);
     }
@@ -58,32 +56,52 @@ public class AsciiColumn : CellBasedColumn
 
         var properties = GetTextRunProperties();
         return TextFormatter.Current.FormatLine(
-            new AsciiTextSource(line, properties),
+            new AsciiTextSource(this, line, properties),
             0,
             double.MaxValue,
             new GenericTextParagraphProperties(properties)
         );
     }
 
-    private static void GetText(ReadOnlySpan<byte> data, Span<char> buffer)
+    private static char MapToPrintableChar(byte b)
     {
+        return b switch
+        {
+            >= 0x20 and < 0x7f => (char) b,
+            _ => '.'
+        };
+    }
+
+    private void GetText(ReadOnlySpan<byte> data, BitRange dataRange, Span<char> buffer)
+    {
+        char invalidCellChar = InvalidCellChar;
+
+        if (HexView?.Document?.ValidRanges is not { } valid)
+        {
+            buffer.Fill(invalidCellChar);
+            return;
+        }
+
         for (int i = 0; i < data.Length; i++)
         {
-            buffer[i] = data[ i] switch
-            {
-                >= 0x20 and < 0x7f => (char) data[ i],
-                _ => '.'
-            };
+            var cellLocation = new BitLocation(dataRange.Start.ByteIndex + (ulong) i, 0);
+            var cellRange = new BitRange(cellLocation, cellLocation.AddBits(8));
+
+            buffer[i] = valid.IsSuperSetOf(cellRange)
+                ? MapToPrintableChar(data[i])
+                : invalidCellChar;
         }
     }
 
     private sealed class AsciiTextSource : ITextSource
     {
+        private readonly AsciiColumn _column;
         private readonly GenericTextRunProperties _properties;
         private readonly VisualBytesLine _line;
 
-        public AsciiTextSource(VisualBytesLine line, GenericTextRunProperties properties)
+        public AsciiTextSource(AsciiColumn column, VisualBytesLine line, GenericTextRunProperties properties)
         {
+            _column = column;
             _line = line;
             _properties = properties;
         }
@@ -101,7 +119,7 @@ public class AsciiColumn : CellBasedColumn
             var range = segment.Range;
             ReadOnlySpan<byte> data = _line.AsAbsoluteSpan(range);
             Span<char> buffer = stackalloc char[(int) range.ByteLength];
-            GetText(data, buffer);
+            _column.GetText(data, range, buffer);
 
             // Render
             return new TextCharacters(

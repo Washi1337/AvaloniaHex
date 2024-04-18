@@ -55,6 +55,13 @@ public readonly struct BitLocation : IEquatable<BitLocation>, IComparable<BitLoc
     }
 
     /// <summary>
+    /// Adds a number of bytes to the location.
+    /// </summary>
+    /// <param name="bytes">The byte count.</param>
+    /// <returns>The new location.</returns>
+    public BitLocation AddBytes(ulong bytes) => new(ByteIndex + bytes, BitIndex);
+
+    /// <summary>
     /// Adds a number of bits to the location.
     /// </summary>
     /// <param name="bits">The bit count.</param>

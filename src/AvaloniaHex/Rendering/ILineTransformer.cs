@@ -8,6 +8,7 @@ public interface ILineTransformer
     /// <summary>
     /// Transforms a visual line.
     /// </summary>
+    /// <param name="hexView"></param>
     /// <param name="line">The line to transform.</param>
-    void Transform(VisualBytesLine line);
+    void Transform(HexView hexView, VisualBytesLine line);
 }

@@ -498,7 +498,7 @@ public class HexView : Control, ILogicalScrollable
         newLine.Segments.Clear();
         newLine.Segments.Add(new VisualBytesLineSegment(newLine.Range));
         foreach (var transformer in LineTransformers)
-            transformer.Transform(newLine);
+            transformer.Transform(this, newLine);
 
         // Create columns
         for (int i = 0; i < Columns.Count; i++)

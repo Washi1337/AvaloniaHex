@@ -1,8 +1,6 @@
 using Avalonia;
-using Avalonia.Input;
 using Avalonia.Media.TextFormatting;
 using AvaloniaHex.Document;
-using AvaloniaHex.Editing;
 
 namespace AvaloniaHex.Rendering;
 
@@ -83,7 +81,7 @@ public class HexColumn : CellBasedColumn
         HexView.Document.ReadBytes(range.Start.ByteIndex, data);
 
         char[] output = new char[data.Length * 3 - 1];
-        GetText(data, output, IsUppercase);
+        GetText(data, range, output);
 
         return new string(output);
     }
@@ -96,7 +94,7 @@ public class HexColumn : CellBasedColumn
 
         var properties = GetTextRunProperties();
         return TextFormatter.Current.FormatLine(
-            new HexTextSource(line, properties, IsUppercase),
+            new HexTextSource(this, line, properties),
             0,
             double.MaxValue,
             new GenericTextParagraphProperties(properties)
@@ -110,35 +108,52 @@ public class HexColumn : CellBasedColumn
         _ => throw new ArgumentOutOfRangeException(nameof(nibble))
     };
 
-    private static void AppendByte(Span<char> buffer, int index, byte value, bool uppercase)
+    private void GetText(ReadOnlySpan<byte> data, BitRange dataRange, Span<char> buffer)
     {
-        buffer[index] = GetHexDigit((byte) ((value >> 4) & 0xF), uppercase);
-        buffer[index + 1] = GetHexDigit((byte) (value & 0xF), uppercase);
-    }
+        bool uppercase = IsUppercase;
+        char invalidCellChar = InvalidCellChar;
 
-    private static void GetText(ReadOnlySpan<byte> data, Span<char> buffer, bool uppercase)
-    {
+        if (HexView?.Document?.ValidRanges is not { } valid)
+        {
+            buffer.Fill(invalidCellChar);
+            return;
+        }
+
         int index = 0;
         for (int i = 0; i < data.Length; i++)
         {
             if (i > 0)
                 buffer[index++] = ' ';
-            AppendByte(buffer, index, data[i], uppercase);
+
+            var location1 = new BitLocation(dataRange.Start.ByteIndex + (ulong) i, 0);
+            var location2 = new BitLocation(dataRange.Start.ByteIndex + (ulong) i, 4);
+            var location3 = new BitLocation(dataRange.Start.ByteIndex + (ulong) i + 1, 0);
+
+            byte value = data[i];
+
+            buffer[index] = valid.IsSuperSetOf(new BitRange(location2, location3))
+                ? GetHexDigit((byte) ((value >> 4) & 0xF), uppercase)
+                : invalidCellChar;
+
+            buffer[index + 1] = valid.IsSuperSetOf(new BitRange(location1, location2))
+                ? GetHexDigit((byte) (value & 0xF), uppercase)
+                : invalidCellChar;
+
             index += 2;
         }
     }
 
     private sealed class HexTextSource : ITextSource
     {
+        private readonly HexColumn _column;
         private readonly GenericTextRunProperties _properties;
-        private readonly bool _isUppercase;
         private readonly VisualBytesLine _line;
 
-        public HexTextSource(VisualBytesLine line, GenericTextRunProperties properties, bool isUppercase)
+        public HexTextSource(HexColumn column, VisualBytesLine line, GenericTextRunProperties properties)
         {
+            _column = column;
             _line = line;
             _properties = properties;
-            _isUppercase = isUppercase;
         }
 
         /// <inheritdoc />
@@ -168,7 +183,7 @@ public class HexColumn : CellBasedColumn
             var range = segment.Range;
             ReadOnlySpan<byte> data = _line.AsAbsoluteSpan(range);
             Span<char> buffer = stackalloc char[(int) segment.Range.ByteLength * 3 - 1];
-            GetText(data, buffer, _isUppercase);
+            _column.GetText(data,  range, buffer);
 
             // Render
             return new TextCharacters(

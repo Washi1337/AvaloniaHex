@@ -1,7 +1,7 @@
 namespace AvaloniaHex.Document;
 
 /// <summary>
-/// Wraps a byte array into a document.
+/// Wraps a byte array into a binary document.
 /// </summary>
 public class ByteArrayBinaryDocument : IBinaryDocument
 {
@@ -15,8 +15,8 @@ public class ByteArrayBinaryDocument : IBinaryDocument
     /// </summary>
     /// <param name="data">The initial data.</param>
     public ByteArrayBinaryDocument(byte[] data)
+        : this(data, false)
     {
-        _data = data;
     }
 
     /// <summary>
@@ -28,6 +28,7 @@ public class ByteArrayBinaryDocument : IBinaryDocument
     {
         IsReadOnly = isReadOnly;
         _data = data;
+        ValidRanges = new ReadOnlyBitRangeUnion(new BitRangeUnion { new(0, Length) });
     }
 
     /// <summary>
@@ -46,6 +47,9 @@ public class ByteArrayBinaryDocument : IBinaryDocument
 
     /// <inheritdoc />
     public bool CanRemove => false;
+
+    /// <inheritdoc />
+    public IReadOnlyBitRangeUnion ValidRanges { get; }
 
     /// <inheritdoc />
     public void ReadBytes(ulong offset, Span<byte> buffer)

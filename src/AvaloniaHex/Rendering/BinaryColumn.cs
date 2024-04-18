@@ -60,7 +60,7 @@ public class BinaryColumn : CellBasedColumn
         HexView.Document.ReadBytes(range.Start.ByteIndex, data);
 
         char[] output = new char[data.Length * 3 - 1];
-        GetText(data, output);
+        GetText(data, range, output);
 
         return new string(output);
     }
@@ -73,38 +73,52 @@ public class BinaryColumn : CellBasedColumn
 
         var properties = GetTextRunProperties();
         return TextFormatter.Current.FormatLine(
-            new BinaryTextSource(line, properties),
+            new BinaryTextSource(this, line, properties),
             0,
             double.MaxValue,
             new GenericTextParagraphProperties(properties)
         );
     }
 
-    private static void AppendByte(Span<char> buffer, int index, byte value)
+    private void GetText(ReadOnlySpan<byte> data, BitRange dataRange, Span<char> buffer)
     {
-        for (int i = 0; i < 8; i++)
-            buffer[index + i] = (char) (((value >> (7 - i)) & 1) + '0');
-    }
+        char invalidCellChar = InvalidCellChar;
 
-    private static void GetText(ReadOnlySpan<byte> data, Span<char> buffer)
-    {
+        if (HexView?.Document?.ValidRanges is not { } valid)
+        {
+            buffer.Fill(invalidCellChar);
+            return;
+        }
+
         int index = 0;
         for (int i = 0; i < data.Length; i++)
         {
             if (i > 0)
                 buffer[index++] = ' ';
-            AppendByte(buffer, index, data[i]);
+
+            byte value = data[i];
+
+            for (int j = 0; j < 8; j++)
+            {
+                var location = new BitLocation(dataRange.Start.ByteIndex + (ulong) i, 7 - j);
+                buffer[index + j] = valid.Contains(location)
+                    ? (char) (((value >> location.BitIndex) & 1) + '0')
+                    : invalidCellChar;
+            }
+
             index += 8;
         }
     }
 
     private sealed class BinaryTextSource : ITextSource
     {
+        private readonly BinaryColumn _column;
         private readonly GenericTextRunProperties _properties;
         private readonly VisualBytesLine _line;
 
-        public BinaryTextSource(VisualBytesLine line, GenericTextRunProperties properties)
+        public BinaryTextSource(BinaryColumn column, VisualBytesLine line, GenericTextRunProperties properties)
         {
+            _column = column;
             _line = line;
             _properties = properties;
         }
@@ -136,7 +150,7 @@ public class BinaryColumn : CellBasedColumn
             var range = segment.Range;
             ReadOnlySpan<byte> data = _line.AsAbsoluteSpan(range);
             Span<char> buffer = stackalloc char[(int) segment.Range.ByteLength * 9 - 1];
-            GetText(data, buffer);
+            _column.GetText(data, range, buffer);
 
             // Render
             return new TextCharacters(

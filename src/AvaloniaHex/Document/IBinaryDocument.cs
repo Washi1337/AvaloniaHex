@@ -8,28 +8,33 @@ public interface IBinaryDocument
     /// <summary>
     /// Fires when the contents of the document has changed.
     /// </summary>
-    event EventHandler<BinaryDocumentChange> Changed; 
-    
+    event EventHandler<BinaryDocumentChange> Changed;
+
     /// <summary>
     /// Gets the total length of the document.
     /// </summary>
     ulong Length { get; }
-    
+
     /// <summary>
     /// Gets a value indicating whether the document can be changed or not.
     /// </summary>
     bool IsReadOnly { get; }
-    
+
     /// <summary>
     /// Gets a value indicating whether additional bytes can be inserted into the document.
     /// </summary>
     bool CanInsert { get; }
-    
+
     /// <summary>
     /// Gets a value indicating whether bytes can be removed from the document.
     /// </summary>
     bool CanRemove { get; }
-    
+
+    /// <summary>
+    /// Gets a collection of binary ranges in the document that are accessible/valid.
+    /// </summary>
+    IReadOnlyBitRangeUnion ValidRanges { get; }
+
     /// <summary>
     /// Reads bytes from the document at the provided offset.
     /// </summary>

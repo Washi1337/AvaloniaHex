@@ -13,7 +13,7 @@ public class RangesHighlighter : ByteHighlighter
     public BitRangeUnion Ranges { get; } = new();
 
     /// <inheritdoc />
-    protected override bool IsHighlighted(VisualBytesLine line, BitLocation location)
+    protected override bool IsHighlighted(HexView hexView, VisualBytesLine line, BitLocation location)
     {
         return Ranges.Contains(location);
     }

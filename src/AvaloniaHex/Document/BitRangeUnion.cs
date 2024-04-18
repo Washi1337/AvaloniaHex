@@ -1,4 +1,6 @@
 using System.Collections;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Diagnostics;
 
 namespace AvaloniaHex.Document;
@@ -7,11 +9,25 @@ namespace AvaloniaHex.Document;
 /// Represents a disjoint union of binary ranges.
 /// </summary>
 [DebuggerDisplay("Count = {Count}")]
-public class BitRangeUnion : ICollection<BitRange>
+public class BitRangeUnion : IReadOnlyBitRangeUnion, ICollection<BitRange>
 {
-    private readonly List<BitRange> _ranges = new();
+    /// <inheritdoc />
+    public event NotifyCollectionChangedEventHandler? CollectionChanged;
+
+    private readonly ObservableCollection<BitRange> _ranges = new();
+
+    /// <summary>
+    /// Creates a new empty union.
+    /// </summary>
+    public BitRangeUnion()
+    {
+        _ranges.CollectionChanged += (sender, args) => CollectionChanged?.Invoke(this, args);
+    }
 
     /// <inheritdoc />
+    public BitRange EnclosingRange => _ranges.Count == 0 ? BitRange.Empty : new(_ranges[0].Start, _ranges[^1].End);
+
+    /// <inheritdoc cref="IReadOnlyCollection{T}.Count" />
     public int Count => _ranges.Count;
 
     /// <inheritdoc />
@@ -80,21 +96,30 @@ public class BitRangeUnion : ICollection<BitRange>
     /// <inheritdoc />
     public void Clear() => _ranges.Clear();
 
-    /// <summary>
-    /// Determines whether the provided location is within the included ranges..
-    /// </summary>
-    /// <param name="location">The location.</param>
-    /// <returns><c>true</c> if the location is included, <c>false</c> otherwise.</returns>
-    public bool Contains(BitLocation location) => Contains(new BitRange(location, location.NextOrMax()));
+    /// <inheritdoc />
+    public bool Contains(BitRange item) => _ranges.Contains(item);
 
     /// <inheritdoc />
-    public bool Contains(BitRange item)
+    public bool Contains(BitLocation location) => IsSuperSetOf(new BitRange(location, location.NextOrMax()));
+
+    /// <inheritdoc />
+    public bool IsSuperSetOf(BitRange range)
     {
-        (var result, int index) = FindFirstOverlappingRange(item);
+        (var result, int index) = FindFirstOverlappingRange(range);
         if (result == SearchResult.NotPresentAtIndex)
             return false;
 
-        return _ranges[index].OverlapsWith(item);
+        return _ranges[index].Contains(range);
+    }
+
+    /// <inheritdoc />
+    public bool IntersectsWith(BitRange range)
+    {
+        (var result, int index) = FindFirstOverlappingRange(range);
+        if (result == SearchResult.NotPresentAtIndex)
+            return false;
+
+        return _ranges[index].OverlapsWith(range);
     }
 
     /// <inheritdoc />
@@ -150,9 +175,7 @@ public class BitRangeUnion : ICollection<BitRange>
         return true;
     }
 
-    /// <summary>
-    /// Gets an enumerator that enumerates all the ranges in the union.
-    /// </summary>
+    /// <inheritdoc />
     public Enumerator GetEnumerator() => new(this);
 
     IEnumerator<BitRange> IEnumerable<BitRange>.GetEnumerator() => GetEnumerator();

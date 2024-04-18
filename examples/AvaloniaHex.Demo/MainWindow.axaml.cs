@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -16,6 +18,7 @@ namespace AvaloniaHex.Demo
     {
         private readonly RangesHighlighter _changesHighlighter;
         private readonly ZeroesHighlighter _zeroesHighlighter;
+        private readonly InvalidRangesHighlighter _invalidRangesHighlighter;
         private string _currentFilePath = null!;
 
         public MainWindow()
@@ -33,8 +36,14 @@ namespace AvaloniaHex.Demo
                 Foreground = Brushes.Red
             };
 
+            _invalidRangesHighlighter = new InvalidRangesHighlighter
+            {
+                Foreground = new SolidColorBrush(Colors.Gray, 0.5)
+            };
+
             // Enable the changes highlighter.
             MainHexEditor.HexView.LineTransformers.Add(_changesHighlighter);
+            MainHexEditor.HexView.LineTransformers.Add(_invalidRangesHighlighter);
 
             // Divide each 8 bytes with a dashed line and separate colors.
             var layer = MainHexEditor.HexView.Layers.Get<CellGroupsLayer>();
@@ -50,7 +59,6 @@ namespace AvaloniaHex.Demo
         protected override async void OnLoaded(RoutedEventArgs e)
         {
             base.OnLoaded(e);
-
             await OpenFile(typeof(MainWindow).Assembly.Location);
         }
 
@@ -79,7 +87,10 @@ namespace AvaloniaHex.Demo
         private async Task SaveFile(string filePath)
         {
             if (MainHexEditor.Document is not ByteArrayBinaryDocument document)
+            {
+                StatusLabel.Content = "Cannot save this document!";
                 return;
+            }
 
             try
             {
@@ -219,11 +230,32 @@ namespace AvaloniaHex.Demo
             else
                 transformers.Add(transformer);
             MainHexEditor.HexView.InvalidateVisualLines();
-
         }
 
         private void ZeroesOnClick(object? sender, RoutedEventArgs e) => ToggleHighlighter(_zeroesHighlighter);
 
         private void ChangesOnClick(object? sender, RoutedEventArgs e) => ToggleHighlighter(_changesHighlighter);
+
+        private void InvalidOnClick(object? sender, RoutedEventArgs e) => ToggleHighlighter(_invalidRangesHighlighter);
+
+        private void SegmentedDocumentOnClick(object? sender, RoutedEventArgs e)
+        {
+            var segments = new List<SegmentedDocument.Mapping>();
+
+            for (int i = 0; i < 10; i++)
+            {
+                segments.Add(new SegmentedDocument.Mapping(
+                    (ulong) (i * 2000),
+                    Enumerable.Range(0, 1000).Select(x => (byte) (x & 0xFF)).ToArray()
+                ));
+            }
+
+            MainHexEditor.Document = new SegmentedDocument(segments);
+        }
+
+        private async void AvaloniaHexDemoOnClick(object? sender, RoutedEventArgs e)
+        {
+            await OpenFile(typeof(MainWindow).Assembly.Location);
+        }
     }
 }

@@ -27,6 +27,10 @@
             DockPanel.Dock="Top">
             <MenuItem Header="_File">
                 <MenuItem Header="_Open" Click="OpenOnClick" HotKey="Ctrl+O" InputGesture="Ctrl+O"/>
+                <MenuItem Header="_Open Example">
+                    <MenuItem Header="AvaloniaHex.Demo.exe" Click="AvaloniaHexDemoOnClick" />
+                    <MenuItem Header="Segmented Document" Click="SegmentedDocumentOnClick" />
+                </MenuItem>
                 <MenuItem Header="_Save" Click="SaveOnClick" HotKey="Ctrl+S" InputGesture="Ctrl+S"/>
                 <MenuItem Header="Save _As" Click="SaveAsOnClick" HotKey="Ctrl+S" InputGesture="Ctrl+Shift+S"/>
             </MenuItem>
@@ -62,6 +66,7 @@
                 <MenuItem Header="Highlighting">
                     <MenuItem Header="Changes" Click="ChangesOnClick"/>
                     <MenuItem Header="Zeroes" Click="ZeroesOnClick"/>
+                    <MenuItem Header="Invalid Ranges" Click="InvalidOnClick"/>
                 </MenuItem>
             </MenuItem>
         </Menu>
@@ -83,7 +88,7 @@
                 <rendering:OffsetColumn />
                 <rendering:HexColumn />
                 <rendering:BinaryColumn IsVisible="False" />
-                <rendering:AsciiColumn />
+                <rendering:AsciiColumn InvalidCellChar="?" />
             </avaloniaHex:HexEditor.Columns>
             <avaloniaHex:HexEditor.ContextMenu>
                 <ContextMenu>
