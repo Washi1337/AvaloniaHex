@@ -91,17 +91,10 @@ public readonly struct BitRange : IEquatable<BitRange>
     /// <param name="other">The other range.</param>
     /// <returns><c>true</c> if the range overlaps, <c>false</c> otherwise.</returns>
     public bool OverlapsWith(BitRange other)
-    {
-        // Are any of the extremes in the other range?
-        if (Contains(other.Start) || Contains(other.End.PreviousOrZero())
-            || other.Contains(Start) || other.Contains(End.PreviousOrZero()))
-        {
-            return true;
-        }
-
-        // Are we enclosing one of the ranges?
-        return Contains(other) || Contains(other);
-    }
+        => Contains(other.Start)
+            || Contains(other.End.PreviousOrZero())
+            || other.Contains(Start)
+            || other.Contains(End.PreviousOrZero());
 
     /// <summary>
     /// Extends the range to the provided location.

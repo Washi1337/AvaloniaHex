@@ -11,7 +11,7 @@ public class BitRangeTest
         Assert.True(new BitRange(10, 10).IsEmpty);
         Assert.True(new BitRange(new BitLocation(0, 5), new BitLocation(0, 5)).IsEmpty);
     }
-    
+
     [Fact]
     public void DoNotAllowEndBeforeStart()
     {
@@ -39,7 +39,7 @@ public class BitRangeTest
 
         Assert.Equal(length, range.BitLength);
     }
-    
+
     [Theory]
     [InlineData(0,0, 10, 0, 5, 0, true)] // middle
     [InlineData(10,5, 100, 0, 10, 5, true)] // start is inclusive
@@ -56,7 +56,7 @@ public class BitRangeTest
             new BitLocation(startByte, startBit),
             new BitLocation(endByte, endBit)
         );
-        
+
         Assert.Equal(expected, range.Contains(new BitLocation(needleByte, needleBit)));
     }
 
@@ -85,54 +85,54 @@ public class BitRangeTest
             new BitLocation(startByte1, startBit1),
             new BitLocation(endByte1, endBit1)
         );
-        
+
         var range2 = new BitRange(
             new BitLocation(startByte2, startBit2),
             new BitLocation(endByte2, endBit2)
         );
-        
+
         Assert.Equal(expected, range1.Contains(range2));
     }
-    
+
     [Theory]
     [InlineData(
-        0, 0, 10, 0, 
-        0, 0, 10,0, 
+        0, 0, 10, 0,
+        0, 0, 10,0,
         true
     )]
     [InlineData(
-        0, 0, 10, 0, 
-        5, 0, 15,0, 
+        0, 0, 10, 0,
+        5, 0, 15,0,
         true
     )]
     [InlineData(
-        0, 0, 10, 0, 
-        9, 0, 15,0, 
+        0, 0, 10, 0,
+        9, 0, 15,0,
         true
     )]
     [InlineData(
-        0, 0, 10, 0, 
-        10, 0, 15,0, 
+        0, 0, 10, 0,
+        10, 0, 15,0,
         false
     )]
     [InlineData(
-        5, 0, 15,0, 
-        0, 0, 10, 0, 
+        5, 0, 15,0,
+        0, 0, 10, 0,
         true
     )]
     [InlineData(
-        9, 0, 15,0, 
-        0, 0, 10, 0, 
+        9, 0, 15,0,
+        0, 0, 10, 0,
         true
     )]
     [InlineData(
-        10, 0, 15,0, 
-        0, 0, 10, 0, 
+        10, 0, 15,0,
+        0, 0, 10, 0,
         false
     )]
     [InlineData(
-        5, 0, 15,0, 
-        7, 0, 10, 0, 
+        5, 0, 15,0,
+        7, 0, 10, 0,
         true
     )]
     public void OverlapsWith(
@@ -144,13 +144,14 @@ public class BitRangeTest
             new BitLocation(startByte1, startBit1),
             new BitLocation(endByte1, endBit1)
         );
-        
+
         var range2 = new BitRange(
             new BitLocation(startByte2, startBit2),
             new BitLocation(endByte2, endBit2)
         );
-        
+
         Assert.Equal(expected, range1.OverlapsWith(range2));
+        Assert.Equal(expected, range2.OverlapsWith(range1));
     }
 
     [Theory]
