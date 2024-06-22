@@ -9,15 +9,21 @@ namespace AvaloniaHex.Rendering;
 /// Represents a single visual line in a hex view.
 /// </summary>
 [DebuggerDisplay("{Range}")]
-public class VisualBytesLine
+public sealed class VisualBytesLine
 {
-    internal VisualBytesLine(BitRange range, int columnCount)
+    internal VisualBytesLine(HexView hexView, BitRange range, int columnCount)
     {
+        HexView = hexView;
         Range = range;
         Data = new byte[range.ByteLength];
         ColumnTextLines = new TextLine?[columnCount];
         Segments = new List<VisualBytesLineSegment>();
     }
+
+    /// <summary>
+    /// Gets the parent ehx view the line is visible in.
+    /// </summary>
+    public HexView HexView { get; }
 
     /// <summary>
     /// Gets the bit range the visual line spans.
@@ -43,6 +49,11 @@ public class VisualBytesLine
     /// Gets the individual text lines for every column.
     /// </summary>
     public TextLine?[] ColumnTextLines { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the data and line segments present in the visual line are up to date.
+    /// </summary>
+    public bool IsValid { get; private set; }
 
     /// <summary>
     /// Gets the byte in the visual line at the provided absolute byte offset.
@@ -84,5 +95,52 @@ public class VisualBytesLine
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Ensures the visual line is populated with the latest binary data and line segments.
+    /// </summary>
+    public void EnsureIsValid()
+    {
+        if (!IsValid)
+            Refresh();
+    }
+
+    /// <summary>
+    /// Marks the visual line, its binary data and line segments as out of date.
+    /// </summary>
+    public void Invalidate() => IsValid = false;
+
+    /// <summary>
+    /// Updates the visual line with the latest data of the document and reconstructs all line segments.
+    /// </summary>
+    public void Refresh()
+    {
+        // Read data
+        HexView.Document!.ReadBytes(Range.Start.ByteIndex, Data);
+
+        // // Apply transformers
+        Segments.Clear();
+        Segments.Add(new VisualBytesLineSegment(Range));
+        foreach (var transformer in HexView.LineTransformers)
+            transformer.Transform(HexView, this);
+
+        // Create columns
+        for (int i = 0; i < HexView.Columns.Count; i++)
+            ColumnTextLines[i] = HexView.Columns[i].CreateTextLine(this);
+
+        IsValid = true;
+    }
+
+    /// <summary>
+    /// Computes the required height required to the visual line occupies.
+    /// </summary>
+    /// <returns>The height.</returns>
+    public double GetRequiredHeight()
+    {
+        double height = 0;
+        foreach (var columns in ColumnTextLines)
+            height = Math.Max(height, columns?.Height ?? 0);
+        return height;
     }
 }

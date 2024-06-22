@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
@@ -8,7 +7,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.TextFormatting;
-using Avalonia.Threading;
 using AvaloniaHex.Document;
 
 namespace AvaloniaHex.Rendering;
@@ -265,7 +263,8 @@ public class HexView : Control, ILogicalScrollable
     /// <param name="line"></param>
     public void InvalidateVisualLine(VisualBytesLine line)
     {
-        RefreshLine(line);
+        line.Invalidate();
+        InvalidateArrange();
 
         for (int i = 0; i < Layers.Count; i++)
         {
@@ -293,7 +292,7 @@ public class HexView : Control, ILogicalScrollable
             return;
 
         foreach (var line in GetVisualLinesByRange(range))
-            RefreshLine(line);
+            line.Invalidate();
 
         for (int i = 0; i < Layers.Count; i++)
         {
@@ -402,40 +401,36 @@ public class HexView : Control, ILogicalScrollable
         if (Columns.Count == 0 || Document is null || Document.Length == 0)
         {
             _visualLines.Clear();
-            _visualLines.Add(new VisualBytesLine(BitRange.Empty, Columns.Count));
+            _visualLines.Add(new VisualBytesLine(this, BitRange.Empty, Columns.Count));
             VisibleRange = default;
             return;
         }
 
         var startLocation = new BitLocation((ulong) ScrollOffset.Y * (ulong) ActualBytesPerLine);
 
-        var range = new BitRange(startLocation, startLocation);
+        var currentRange = new BitRange(startLocation, startLocation);
 
         double currentY = 0;
-        while (currentY < finalSize.Height && range.End.ByteIndex < Document.Length)
+        while (currentY < finalSize.Height && currentRange.End.ByteIndex < Document.Length)
         {
             // Get/create next visual line.
             var line = GetOrCreateVisualLine(new BitRange(
-                range.End.ByteIndex,
-                Math.Min(Document.Length, range.End.ByteIndex + (ulong) ActualBytesPerLine)
+                currentRange.End.ByteIndex,
+                Math.Min(Document.Length, currentRange.End.ByteIndex + (ulong) ActualBytesPerLine)
             ));
 
-            // Measure height across columns.
-            double height = 0;
-            for (int i = 0; i < Columns.Count; i++)
-                height = Math.Max(height, line.ColumnTextLines[i]?.Height ?? 0);
-
-            line.Bounds = new Rect(0, currentY, finalSize.Width, height);
+            line.EnsureIsValid();
+            line.Bounds = new Rect(0, currentY, finalSize.Width, line.GetRequiredHeight());
 
             // Move to next line / range.
-            currentY += height;
-            range = line.Range;
+            currentY += line.Bounds.Height;
+            currentRange = line.Range;
         }
 
         // Compute full visible range (including lines that are only slightly visible).
         VisibleRange = _visualLines.Count == 0
             ? new BitRange(Document.Length, Document.Length)
-            : new BitRange(startLocation, range.End);
+            : new BitRange(startLocation, currentRange.End);
 
         // Get fully visible byte range.
         if (_visualLines.Count == 0 || !(_visualLines[^1].Bounds.Bottom > finalSize.Height))
@@ -465,13 +460,14 @@ public class HexView : Control, ILogicalScrollable
         for (int i = 0; i < _visualLines.Count; i++)
         {
             // Exact match?
-            if (_visualLines[i].Range.Start == range.Start)
-                return _visualLines[i];
+            var currentLine = _visualLines[i];
+            if (currentLine.Range.Start == range.Start)
+                return currentLine;
 
             // If the next line is further than the requested start, the line does not exist.
-            if (_visualLines[i].Range.Start > range.Start)
+            if (currentLine.Range.Start > range.Start)
             {
-                newLine = new VisualBytesLine(range, Columns.Count);
+                newLine = new VisualBytesLine(this, range, Columns.Count);
                 _visualLines.Insert(i, newLine);
                 break;
             }
@@ -480,29 +476,11 @@ public class HexView : Control, ILogicalScrollable
         // We didn't find any line for the location, add it to the end.
         if (newLine is null)
         {
-            newLine = new VisualBytesLine(range, Columns.Count);
+            newLine = new VisualBytesLine(this, range, Columns.Count);
             _visualLines.Add(newLine);
         }
 
-        RefreshLine(newLine);
-
         return newLine;
-    }
-
-    private void RefreshLine(VisualBytesLine newLine)
-    {
-        // Read data
-        Document!.ReadBytes(newLine.Range.Start.ByteIndex, newLine.Data);
-
-        // // Apply transformers
-        newLine.Segments.Clear();
-        newLine.Segments.Add(new VisualBytesLineSegment(newLine.Range));
-        foreach (var transformer in LineTransformers)
-            transformer.Transform(this, newLine);
-
-        // Create columns
-        for (int i = 0; i < Columns.Count; i++)
-            newLine.ColumnTextLines[i] = Columns[i].CreateTextLine(newLine);
     }
 
     /// <summary>
