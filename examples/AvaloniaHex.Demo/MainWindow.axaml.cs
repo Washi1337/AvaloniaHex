@@ -257,5 +257,11 @@ namespace AvaloniaHex.Demo
         {
             await OpenFile(typeof(MainWindow).Assembly.Location);
         }
+
+        private void OnFillWithZeroesOnClick(object? sender, RoutedEventArgs e)
+        {
+            var range = MainHexEditor.Selection.Range;
+            MainHexEditor.Document?.WriteBytes(range.Start.ByteIndex, new byte[range.ByteLength]);
+        }
     }
 }

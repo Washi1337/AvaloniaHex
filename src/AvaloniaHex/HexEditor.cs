@@ -279,7 +279,6 @@ public class HexEditor : TemplatedControl
 
             if (Caret.PrimaryColumn.HandleTextInput(ref location, e.Text, Caret.Mode))
             {
-                HexView.InvalidateVisualLine(Caret.Location);
                 Caret.Location = location.Clamp(new BitRange(0, Document.Length));
                 UpdateSelection(Caret.Location, false);
             }
@@ -410,11 +409,6 @@ public class HexEditor : TemplatedControl
         var newLocation = oldLocation;
         if (!column.HandleTextInput(ref newLocation, text, Caret.Mode))
             return;
-
-        HexView.InvalidateVisualLines(new BitRange(
-            oldLocation.Min(newLocation),
-            newLocation.Max(oldLocation)
-        ));
 
         Caret.Location = newLocation;
         UpdateSelection(oldLocation, false);

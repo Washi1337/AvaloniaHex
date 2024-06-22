@@ -299,6 +299,8 @@ public class HexView : Control, ILogicalScrollable
             if ((Layers[i].UpdateMoments & LayerRenderMoments.LineInvalidate) != 0)
                 Layers[i].InvalidateVisual();
         }
+
+        InvalidateArrange();
     }
 
     /// <inheritdoc />
@@ -623,15 +625,28 @@ public class HexView : Control, ILogicalScrollable
 
     void ILogicalScrollable.RaiseScrollInvalidated(EventArgs e) => ScrollInvalidated?.Invoke(this, e);
 
-    private static void OnDocumentChanged(HexView arg1, AvaloniaPropertyChangedEventArgs arg2)
+    private static void OnDocumentChanged(HexView view, AvaloniaPropertyChangedEventArgs arg2)
     {
-        arg1._scrollOffset = default;
-        arg1.InvalidateVisualLines();
+        view._scrollOffset = default;
+        view.InvalidateVisualLines();
 
-        arg1.OnDocumentChanged(new DocumentChangedEventArgs(
-            (IBinaryDocument?) arg2.OldValue,
-            (IBinaryDocument?) arg2.NewValue
+        var oldDocument = (IBinaryDocument?) arg2.OldValue;
+        if (oldDocument is not null)
+            oldDocument.Changed -= view.DocumentOnChanged;
+
+        var newDocument = (IBinaryDocument?) arg2.NewValue;
+        if (newDocument is not null)
+            newDocument.Changed += view.DocumentOnChanged;
+
+        view.OnDocumentChanged(new DocumentChangedEventArgs(
+            oldDocument,
+            newDocument
         ));
+    }
+
+    private void DocumentOnChanged(object? sender, BinaryDocumentChange e)
+    {
+        InvalidateVisualLines(e.AffectedRange);
     }
 
     /// <summary>
@@ -646,6 +661,7 @@ public class HexView : Control, ILogicalScrollable
     private static void OnFontRelatedPropertyChanged(HexView arg1, AvaloniaPropertyChangedEventArgs arg2)
     {
         arg1.EnsureTextProperties();
+        arg1.InvalidateMeasure();
         arg1.InvalidateVisualLines();
     }
 

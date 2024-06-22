@@ -34,6 +34,9 @@
                 <MenuItem Header="_Save" Click="SaveOnClick" HotKey="Ctrl+S" InputGesture="Ctrl+S"/>
                 <MenuItem Header="Save _As" Click="SaveAsOnClick" HotKey="Ctrl+S" InputGesture="Ctrl+Shift+S"/>
             </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="Fill With Zeroes" Click="OnFillWithZeroesOnClick"/>
+            </MenuItem>
             <MenuItem Header="_View">
                 <MenuItem Header="Toggle _Uppercase" Click="UppercaseOnClick"/>
                 <MenuItem Header="Theme">
