@@ -34,7 +34,7 @@ public class SegmentedDocument : IBinaryDocument
 
         Array.Sort(_mappings, (a, b) => a.Location.CompareTo(b.Location));
 
-        ValidRanges = new ReadOnlyBitRangeUnion(_ranges);
+        ValidRanges = _ranges.AsReadOnly();
     }
 
     /// <inheritdoc />

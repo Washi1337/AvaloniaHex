@@ -30,6 +30,7 @@
                 <MenuItem Header="_Open Example">
                     <MenuItem Header="AvaloniaHex.Demo.exe" Click="AvaloniaHexDemoOnClick" />
                     <MenuItem Header="Segmented Document" Click="SegmentedDocumentOnClick" />
+                    <MenuItem Header="Real Time Changing Document" Click="RealTimeChangingDocumentOnClick" />
                 </MenuItem>
                 <MenuItem Header="_Save" Click="SaveOnClick" HotKey="Ctrl+S" InputGesture="Ctrl+S"/>
                 <MenuItem Header="Save _As" Click="SaveAsOnClick" HotKey="Ctrl+S" InputGesture="Ctrl+Shift+S"/>

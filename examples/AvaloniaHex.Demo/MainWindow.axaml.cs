@@ -16,10 +16,11 @@ namespace AvaloniaHex.Demo
 {
     public partial class MainWindow : Window
     {
+        private readonly Random _random = new();
         private readonly RangesHighlighter _changesHighlighter;
         private readonly ZeroesHighlighter _zeroesHighlighter;
         private readonly InvalidRangesHighlighter _invalidRangesHighlighter;
-        private string _currentFilePath = null!;
+        private string? _currentFilePath;
 
         public MainWindow()
         {
@@ -124,7 +125,7 @@ namespace AvaloniaHex.Demo
                 {
                     new FilePickerFileType("All files")
                     {
-                        Patterns = new[] {"*.*"}
+                        Patterns = new[] {"*"}
                     }
                 }
             });
@@ -157,7 +158,7 @@ namespace AvaloniaHex.Demo
                 {
                     new FilePickerFileType("All files")
                     {
-                        Patterns = new[] {"*.*"}
+                        Patterns = new[] {"*"}
                     }
                 }
             });
@@ -166,7 +167,13 @@ namespace AvaloniaHex.Demo
                 await SaveFile(path);
         }
 
-        private async void SaveOnClick(object? sender, RoutedEventArgs e) => await SaveFile(_currentFilePath);
+        private async void SaveOnClick(object? sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(_currentFilePath))
+                SaveAsOnClick(sender, e);
+            else
+                await SaveFile(_currentFilePath);
+        }
 
         private void UppercaseOnClick(object? sender, RoutedEventArgs e)
         {
@@ -242,6 +249,7 @@ namespace AvaloniaHex.Demo
         {
             var segments = new List<SegmentedDocument.Mapping>();
 
+            // Add some random mappings.
             for (int i = 0; i < 10; i++)
             {
                 segments.Add(new SegmentedDocument.Mapping(
@@ -250,7 +258,23 @@ namespace AvaloniaHex.Demo
                 ));
             }
 
+            _currentFilePath = null;
             MainHexEditor.Document = new SegmentedDocument(segments);
+        }
+
+        private void RealTimeChangingDocumentOnClick(object? sender, RoutedEventArgs e)
+        {
+            var document = new RealTimeChangingDocument(5 * 1024, TimeSpan.FromMilliseconds(100));
+
+            // Add some random dynamic ranges.
+            for (int i = 0; i < 10; i++)
+            {
+                int start = _random.Next((int) document.Length);
+                document.DynamicRanges.Add(new BitRange((ulong) start, (ulong) start + 4));
+            }
+
+            _currentFilePath = null;
+            MainHexEditor.Document = document;
         }
 
         private async void AvaloniaHexDemoOnClick(object? sender, RoutedEventArgs e)

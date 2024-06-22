@@ -28,7 +28,7 @@ public class ByteArrayBinaryDocument : IBinaryDocument
     {
         IsReadOnly = isReadOnly;
         _data = data;
-        ValidRanges = new ReadOnlyBitRangeUnion(new BitRangeUnion { new(0, Length) });
+        ValidRanges = new BitRangeUnion([new BitRange(0, Length)]).AsReadOnly();
     }
 
     /// <summary>

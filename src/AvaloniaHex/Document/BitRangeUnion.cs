@@ -24,6 +24,17 @@ public class BitRangeUnion : IReadOnlyBitRangeUnion, ICollection<BitRange>
         _ranges.CollectionChanged += (sender, args) => CollectionChanged?.Invoke(this, args);
     }
 
+    /// <summary>
+    /// Initializes a new union of bit ranges.
+    /// </summary>
+    /// <param name="ranges">The ranges to unify.</param>
+    public BitRangeUnion(IEnumerable<BitRange> ranges)
+        : this()
+    {
+        foreach (var range in ranges)
+            Add(range);
+    }
+
     /// <inheritdoc />
     public BitRange EnclosingRange => _ranges.Count == 0 ? BitRange.Empty : new(_ranges[0].Start, _ranges[^1].End);
 
@@ -181,6 +192,12 @@ public class BitRangeUnion : IReadOnlyBitRangeUnion, ICollection<BitRange>
     IEnumerator<BitRange> IEnumerable<BitRange>.GetEnumerator() => GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    /// <summary>
+    /// Wraps the union into a <see cref="ReadOnlyBitRangeUnion"/>.
+    /// </summary>
+    /// <returns>The resulting read-only union.</returns>
+    public ReadOnlyBitRangeUnion AsReadOnly() => new(this);
 
     private enum SearchResult
     {
