@@ -28,4 +28,7 @@
     <ItemGroup>
       <ProjectReference Include="..\..\src\AvaloniaHex\AvaloniaHex.csproj" />
     </ItemGroup>
+    <ItemGroup>
+        <AvaloniaResource Include="Resources\**" />
+    </ItemGroup>
 </Project>
