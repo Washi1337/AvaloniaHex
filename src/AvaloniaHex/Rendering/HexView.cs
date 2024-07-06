@@ -26,6 +26,7 @@ public class HexView : Control, ILogicalScrollable
 
     private readonly List<VisualBytesLine> _visualLines = new();
     private Vector _scrollOffset;
+    private Size _extent;
     private int _actualBytesPerLine;
 
     static HexView()
@@ -200,7 +201,18 @@ public class HexView : Control, ILogicalScrollable
     public LayerCollection Layers { get; }
 
     /// <inheritdoc />
-    public Size Extent { get; private set; }
+    public Size Extent
+    {
+        get => _extent;
+        private set
+        {
+            if (_extent != value)
+            {
+                _extent = value;
+                ((ILogicalScrollable) this).RaiseScrollInvalidated(EventArgs.Empty);
+            }
+        }
+    }
 
     /// <summary>
     /// Gets or sets the current scroll offset.
@@ -212,6 +224,7 @@ public class HexView : Control, ILogicalScrollable
         {
             _scrollOffset = value;
             InvalidateArrange();
+            ((ILogicalScrollable) this).RaiseScrollInvalidated(EventArgs.Empty);
         }
     }
 
@@ -335,8 +348,6 @@ public class HexView : Control, ILogicalScrollable
             if (hasResized || (Layers[i].UpdateMoments & LayerRenderMoments.NoResizeRearrange) != 0)
                 Layers[i].InvalidateVisual();
         }
-
-        ((ILogicalScrollable) this).RaiseScrollInvalidated(EventArgs.Empty);
 
         return base.ArrangeOverride(finalSize);
     }

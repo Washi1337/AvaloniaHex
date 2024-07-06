@@ -378,6 +378,13 @@ public class HexEditor : TemplatedControl
         }
     }
 
+    /// <inheritdoc />
+    protected override void OnSizeChanged(SizeChangedEventArgs e)
+    {
+        HexView.BringIntoView(Caret.Location);
+        base.OnSizeChanged(e);
+    }
+
     /// <summary>
     /// Copies the currently selected text to the clipboard.
     /// </summary>
