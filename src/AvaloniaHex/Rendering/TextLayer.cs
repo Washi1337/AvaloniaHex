@@ -17,8 +17,9 @@ public class TextLayer : Layer
             return;
 
         double currentY = 0;
-        foreach (var line in HexView.VisualLines)
+        for (int i = 0; i < HexView.VisualLines.Count; i++)
         {
+            var line = HexView.VisualLines[i];
             foreach (var column in HexView.Columns)
             {
                 if (column.IsVisible)

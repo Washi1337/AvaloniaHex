@@ -401,11 +401,15 @@ public class HexView : Control, ILogicalScrollable
         foreach (var column in Columns)
         {
             if (!column.IsVisible)
-                continue;
-
-            double width = column.Width;
-            column.SetBounds(new Rect(currentX, 0, width, Bounds.Height));
-            currentX += width + ColumnPadding;
+            {
+                column.SetBounds(default);
+            }
+            else
+            {
+                double width = column.Width;
+                column.SetBounds(new Rect(currentX, 0, width, Bounds.Height));
+                currentX += width + ColumnPadding;
+            }
         }
     }
 
@@ -560,7 +564,7 @@ public class HexView : Control, ILogicalScrollable
     {
         foreach (var column in Columns)
         {
-            if (column.Bounds.Contains(point))
+            if (column.IsVisible && column.Bounds.Contains(point))
                 return column;
         }
 
