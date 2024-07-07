@@ -184,6 +184,11 @@ namespace AvaloniaHex.Demo
             hexColumn.IsUppercase = !hexColumn.IsUppercase;
         }
 
+        private void SystemThemeOnClick(object? sender, RoutedEventArgs e)
+        {
+            Application.Current!.RequestedThemeVariant = ThemeVariant.Default;
+        }
+
         private void LightThemeOnClick(object? sender, RoutedEventArgs e)
         {
             Application.Current!.RequestedThemeVariant = ThemeVariant.Light;

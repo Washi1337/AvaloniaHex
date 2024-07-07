@@ -27,7 +27,7 @@
             DockPanel.Dock="Top">
             <MenuItem Header="_File">
                 <MenuItem Header="_Open" Click="OpenOnClick" HotKey="Ctrl+O" InputGesture="Ctrl+O"/>
-                <MenuItem Header="_Open Example">
+                <MenuItem Header="Open E_xample">
                     <MenuItem Header="AvaloniaHex.Demo.exe" Click="AvaloniaHexDemoOnClick" />
                     <MenuItem Header="Segmented Document" Click="SegmentedDocumentOnClick" />
                     <MenuItem Header="Real Time Changing Document" Click="RealTimeChangingDocumentOnClick" />
@@ -41,6 +41,7 @@
             <MenuItem Header="_View">
                 <MenuItem Header="Toggle _Uppercase" Click="UppercaseOnClick"/>
                 <MenuItem Header="Theme">
+                    <MenuItem Header="System Theme" Click="SystemThemeOnClick"/>
                     <MenuItem Header="Light" Click="LightThemeOnClick"/>
                     <MenuItem Header="Dark" Click="DarkThemeOnClick"/>
                 </MenuItem>
