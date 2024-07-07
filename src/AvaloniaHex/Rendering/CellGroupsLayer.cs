@@ -90,8 +90,8 @@ public class CellGroupsLayer : Layer
         var line = HexView!.VisualLines[0];
         for (uint offset = 0; offset < HexView.ActualBytesPerLine; offset += (uint)BytesPerGroup, groupIndex++)
         {
-            var right1 = new BitLocation(line.Range.Start.ByteIndex + (uint)BytesPerGroup + offset - 1, 0).Clamp(line.Range);
-            var right2 = new BitLocation(line.Range.Start.ByteIndex + (uint)BytesPerGroup + offset, 7).Clamp(line.Range);
+            var right1 = new BitLocation(line.Range.Start.ByteIndex + (uint)BytesPerGroup + offset - 1, 0);
+            var right2 = new BitLocation(line.Range.Start.ByteIndex + (uint)BytesPerGroup + offset, 7);
             var rightCell1 = column.GetCellBounds(line, right1);
             var rightCell2 = column.GetCellBounds(line, right2);
 
