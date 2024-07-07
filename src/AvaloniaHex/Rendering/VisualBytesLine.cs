@@ -127,7 +127,11 @@ public sealed class VisualBytesLine
 
         // Create columns
         for (int i = 0; i < HexView.Columns.Count; i++)
-            ColumnTextLines[i] = HexView.Columns[i].CreateTextLine(this);
+        {
+            var column = HexView.Columns[i];
+            if (column.IsVisible)
+                ColumnTextLines[i] = column.CreateTextLine(this);
+        }
 
         IsValid = true;
     }
