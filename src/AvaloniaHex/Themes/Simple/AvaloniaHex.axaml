@@ -49,7 +49,7 @@
 
     <Style Selector="avaloniaHex|HexEditor">
         <Setter Property="Foreground" Value="{DynamicResource HexForegroundBase}"/>
-        <Setter Property="ColumnPadding" Value="20"/>
+        <Setter Property="ColumnPadding" Value="30"/>
     </Style>
 
     <Style Selector="rendering|OffsetColumn">

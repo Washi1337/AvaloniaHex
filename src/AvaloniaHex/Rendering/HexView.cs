@@ -40,7 +40,8 @@ public class HexView : Control, ILogicalScrollable
 
         AffectsArrange<HexView>(
             DocumentProperty,
-            BytesPerLineProperty
+            BytesPerLineProperty,
+            ColumnPaddingProperty
         );
     }
 

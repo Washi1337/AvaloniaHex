@@ -61,6 +61,13 @@
                     <MenuItem Header="32" Click="AdjustOnClick" CommandParameter="32"/>
                     <MenuItem Header="64" Click="AdjustOnClick" CommandParameter="64"/>
                 </MenuItem>
+                <MenuItem Header="Column Padding">
+                    <MenuItem Header="10"  Click="ColumnPaddingOnClick" CommandParameter="10"/>
+                    <MenuItem Header="20" Click="ColumnPaddingOnClick" CommandParameter="20"/>
+                    <MenuItem Header="30" Click="ColumnPaddingOnClick" CommandParameter="30"/>
+                    <MenuItem Header="40" Click="ColumnPaddingOnClick" CommandParameter="40"/>
+                    <MenuItem Header="50" Click="ColumnPaddingOnClick" CommandParameter="50"/>
+                </MenuItem>
                 <MenuItem Header="Columns">
                     <MenuItem Header="Offset" Click="OffsetOnClick" />
                     <MenuItem Header="Hex" Click="HexOnClick" />
@@ -86,7 +93,6 @@
             BorderBrush="{DynamicResource MainBorderBrush}"
             BorderThickness="1"
             FontSize="14"
-            ColumnPadding="30"
             FontFamily="{StaticResource SourceCodeProFont}">
             <avaloniaHex:HexEditor.Columns>
                 <rendering:OffsetColumn />

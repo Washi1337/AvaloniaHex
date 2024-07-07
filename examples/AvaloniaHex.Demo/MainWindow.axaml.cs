@@ -229,6 +229,15 @@ namespace AvaloniaHex.Demo
             MainHexEditor.HexView.FontSize = fontSize;
         }
 
+        private void ColumnPaddingOnClick(object? sender, RoutedEventArgs e)
+        {
+            double columnPadding = 5D;
+            if (int.TryParse(((MenuItem)sender!).CommandParameter?.ToString(), out int padding))
+                columnPadding = padding;
+
+            MainHexEditor.ColumnPadding = columnPadding;
+        }
+
         private void ToggleHighlighter(ILineTransformer transformer)
         {
             var transformers = MainHexEditor.HexView.LineTransformers;
