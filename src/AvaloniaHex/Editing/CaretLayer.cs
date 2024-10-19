@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
 using AvaloniaHex.Rendering;
@@ -43,6 +44,15 @@ public class CaretLayer : Layer
         };
 
         _blinkTimer.Tick += BlinkTimerOnTick;
+    }
+    
+    /// <inheritdoc />
+    protected override void OnUnloaded(RoutedEventArgs e)
+    {
+        base.OnUnloaded(e);
+
+        _blinkTimer.IsEnabled = false;
+        _blinkTimer.Tick -= BlinkTimerOnTick;
     }
 
     /// <inheritdoc />
