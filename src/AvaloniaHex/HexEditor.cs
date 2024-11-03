@@ -203,6 +203,7 @@ public class HexEditor : TemplatedControl
                 Caret.PrimaryColumnIndex = column.Index;
                 if (HexView.GetLocationByPoint(position) is { } location)
                 {
+                    // Update selection when holding down the shift key.
                     bool isShiftDown = (e.KeyModifiers & KeyModifiers.Shift) != 0;
                     if (isShiftDown)
                     {
@@ -218,6 +219,7 @@ public class HexEditor : TemplatedControl
                         _selectionAnchorPoint = location;
                     }
 
+                    // Actually update the caret.
                     Caret.Location = location;
                     _isMouseDragging = true;
                 }
