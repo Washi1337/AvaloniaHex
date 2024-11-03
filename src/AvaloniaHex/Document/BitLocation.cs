@@ -161,7 +161,7 @@ public readonly struct BitLocation : IEquatable<BitLocation>, IComparable<BitLoc
     /// </summary>
     /// <param name="range">The range.</param>
     /// <returns>The restricted location.</returns>
-    public BitLocation Clamp(BitRange range) => Max(range.Start).Min(range.End);
+    public BitLocation Clamp(BitRange range) => Max(range.Start).Min(range.End.PreviousOrZero());
 
     /// <summary>
     /// Aligns the location down to the lower byte offset.
@@ -170,7 +170,7 @@ public readonly struct BitLocation : IEquatable<BitLocation>, IComparable<BitLoc
     public BitLocation AlignDown() => new(ByteIndex, 0);
 
     /// <summary>
-    /// Aligns the location down to the next byte offset.
+    /// Aligns the location up to the next byte offset.
     /// </summary>
     /// <returns>The aligned location.</returns>
     public BitLocation AlignUp() => BitIndex > 0 ? new BitLocation(ByteIndex + 1, 0) : this;

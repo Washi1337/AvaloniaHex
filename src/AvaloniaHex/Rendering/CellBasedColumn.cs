@@ -240,6 +240,28 @@ public abstract class CellBasedColumn : Column
     }
 
     /// <summary>
+    /// Gets the location of the first selectable cell.
+    /// </summary>
+    /// <returns>The location.</returns>
+    public BitLocation GetFirstLocation()
+    {
+        return HexView?.Document is { } document
+            ? new BitLocation(document.Length - 1, 0)
+            : default;
+    }
+
+    /// <summary>
+    /// Gets the location of the last selectable cell.
+    /// </summary>
+    /// <returns>The location.</returns>
+    public BitLocation GetLastLocation()
+    {
+        return HexView?.Document is { } document
+            ? new BitLocation(document.Length - 1, 0)
+            : default;
+    }
+
+    /// <summary>
     /// Given a bit location, gets the location of the cell before it.
     /// </summary>
     /// <param name="location">The location.</param>
@@ -250,7 +272,7 @@ public abstract class CellBasedColumn : Column
             return new BitLocation(location.ByteIndex, location.BitIndex + BitsPerCell);
 
         if (location.ByteIndex == 0)
-            return new BitLocation(0, 8 - BitsPerCell);
+            return GetFirstLocation();
 
         return new BitLocation(location.ByteIndex - 1, 0);
     }
@@ -268,10 +290,10 @@ public abstract class CellBasedColumn : Column
         if (location.BitIndex != 0)
             return new BitLocation(location.ByteIndex, location.BitIndex - BitsPerCell);
 
-        if (location.ByteIndex < document.Length - 1)
-            return new BitLocation(location.ByteIndex + 1, 8 - BitsPerCell);
+        if (location.ByteIndex >= document.Length - 1)
+            return GetLastLocation();
 
-        return new BitLocation(document.Length - 1, 0);
+        return new BitLocation(location.ByteIndex + 1, 8 - BitsPerCell);
     }
 
     /// <summary>
