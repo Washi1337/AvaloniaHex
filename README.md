@@ -13,7 +13,7 @@ This is a(n experimental) hex editor control for the [Avalonia](https://github.c
 - Specify invalid or inaccessible ranges. Useful for documents with "gaps" (e.g., memory views).
 - Many style customization options available with default Light and Dark themes.
 - Custom byte ranges highlighting.
-
+- Support for memory mapped files.
 
 ## Binaries
 
@@ -52,6 +52,14 @@ Then, add the `HexEditor` control to your window:
     </avaloniaHex:HexEditor>
 
 </Window>
+```
+
+To display a file in the control, assign the `Document` property:
+
+```csharp
+HexEditor editor = ...;
+
+editor.Document = new MemoryBinaryDocument(File.ReadAllBytes(@"C:\Path\To\File.bin"));
 ```
 
 See [examples](examples) for more details.
