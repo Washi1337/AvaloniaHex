@@ -3,7 +3,7 @@ namespace AvaloniaHex.Document;
 /// <summary>
 /// Represents a binary document that can be displayed in a hex editor.
 /// </summary>
-public interface IBinaryDocument
+public interface IBinaryDocument : IDisposable
 {
     /// <summary>
     /// Fires when the contents of the document has changed.
@@ -69,4 +69,9 @@ public interface IBinaryDocument
     /// Occurs when the document is read-only or cannot remove bytes.
     /// </exception>
     void RemoveBytes(ulong offset, ulong length);
+
+    /// <summary>
+    /// Flushes all buffered changes to the underlying persistent backing storage of the document.
+    /// </summary>
+    void Flush();
 }

@@ -139,6 +139,15 @@ public class SegmentedDocument : IBinaryDocument
 
     protected virtual void OnChanged(BinaryDocumentChange e) => Changed?.Invoke(this, e);
 
+
+    void IBinaryDocument.Flush()
+    {
+    }
+
+    void IDisposable.Dispose()
+    {
+    }
+
     /// <summary>
     /// A single mapped segment.
     /// </summary>

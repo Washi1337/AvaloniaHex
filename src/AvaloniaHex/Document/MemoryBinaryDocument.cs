@@ -1,44 +1,43 @@
 namespace AvaloniaHex.Document;
 
 /// <summary>
-/// Wraps a byte array into a binary document.
+/// Represents a binary document that is backed by an instance of <see cref="Memory{Byte}"/>.
 /// </summary>
-[Obsolete("Use MemoryBinaryDocument instead.")]
-public class ByteArrayBinaryDocument : IBinaryDocument
+public class MemoryBinaryDocument : IBinaryDocument
 {
     /// <inheritdoc />
     public event EventHandler<BinaryDocumentChange>? Changed;
 
-    private readonly byte[] _data;
+    private readonly Memory<byte> _memory;
 
     /// <summary>
-    /// Creates a new byte array document.
+    /// Creates a new memory binary document using the provided memory backing storage.
     /// </summary>
-    /// <param name="data">The backing buffer.</param>
-    public ByteArrayBinaryDocument(byte[] data)
-        : this(data, false)
+    /// <param name="memory">The memory backing buffer.</param>
+    public MemoryBinaryDocument(Memory<byte> memory)
+        : this(memory, false)
     {
     }
 
     /// <summary>
-    /// Creates a new byte array document.
+    /// Creates a new memory binary document using the provided memory backing storage.
     /// </summary>
-    /// <param name="data">The backing buffer.</param>
+    /// <param name="memory">The memory backing buffer.</param>
     /// <param name="isReadOnly"><c>true</c> if the document can be edited, <c>false</c> otherwise.</param>
-    public ByteArrayBinaryDocument(byte[] data, bool isReadOnly)
+    public MemoryBinaryDocument(Memory<byte> memory, bool isReadOnly)
     {
+        _memory = memory;
         IsReadOnly = isReadOnly;
-        _data = data;
         ValidRanges = new BitRangeUnion([new BitRange(0, Length)]).AsReadOnly();
     }
 
     /// <summary>
-    /// Gets the data stored in the document.
+    /// Gets the underlying memory backing buffer.
     /// </summary>
-    public byte[] Data => _data;
+    public Memory<byte> Memory => _memory;
 
     /// <inheritdoc />
-    public ulong Length => (ulong) _data.Length;
+    public ulong Length => (ulong) _memory.Length;
 
     /// <inheritdoc />
     public bool IsReadOnly { get; }
@@ -55,7 +54,7 @@ public class ByteArrayBinaryDocument : IBinaryDocument
     /// <inheritdoc />
     public void ReadBytes(ulong offset, Span<byte> buffer)
     {
-        _data.AsSpan((int) offset, buffer.Length).CopyTo(buffer);
+        _memory.Span[(int) offset..((int)offset + buffer.Length)].CopyTo(buffer);
     }
 
     /// <inheritdoc />
@@ -64,7 +63,7 @@ public class ByteArrayBinaryDocument : IBinaryDocument
         if (IsReadOnly)
             throw new InvalidOperationException("Document is read-only.");
 
-        buffer.CopyTo(_data.AsSpan((int) offset, buffer.Length));
+        buffer.CopyTo(_memory.Span[(int) offset..((int)offset + buffer.Length)]);
         OnChanged(new BinaryDocumentChange(BinaryDocumentChangeType.Modify, new BitRange(offset, offset + (ulong) buffer.Length)));
     }
 

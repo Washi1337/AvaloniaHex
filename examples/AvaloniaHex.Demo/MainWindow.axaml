@@ -27,6 +27,7 @@
             DockPanel.Dock="Top">
             <MenuItem Header="_File">
                 <MenuItem Header="_Open" Click="OpenOnClick" HotKey="Ctrl+O" InputGesture="Ctrl+O"/>
+                <MenuItem Header="Open using _MMIO" Click="OpenMmioOnClick" HotKey="Ctrl+Shift+O" InputGesture="Ctrl+Shift+O"/>
                 <MenuItem Header="Open E_xample">
                     <MenuItem Header="AvaloniaHex.Demo.exe" Click="AvaloniaHexDemoOnClick" />
                     <MenuItem Header="Segmented Document" Click="SegmentedDocumentOnClick" />

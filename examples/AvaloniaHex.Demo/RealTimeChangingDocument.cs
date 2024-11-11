@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Avalonia.Threading;
 using AvaloniaHex.Document;
 
@@ -8,7 +9,7 @@ namespace AvaloniaHex.Demo;
 /// <summary>
 /// Provides an example implementation of a binary document that demonstrates notifying document changes to a hex view.
 /// </summary>
-public class RealTimeChangingDocument : ByteArrayBinaryDocument
+public class RealTimeChangingDocument : MemoryBinaryDocument
 {
     private readonly Random _random = new();
 
@@ -26,14 +27,17 @@ public class RealTimeChangingDocument : ByteArrayBinaryDocument
 
     private void RefreshTimerOnTick(object? sender, EventArgs e)
     {
+        int maxLength = (int) DynamicRanges.Max(x => x.ByteLength);
+        Span<byte> buffer = stackalloc byte[maxLength];
+
         for (int i = 0; i < DynamicRanges.Count; i++)
         {
             var range = DynamicRanges[i];
 
             // Generate some new random memory for this range.
-            byte[] buffer = new byte[range.ByteLength];
-            _random.NextBytes(buffer);
-            buffer.CopyTo(Data, (int) range.Start.ByteIndex);
+            var span = buffer[..(int) range.ByteLength];
+            _random.NextBytes(span);
+            span.CopyTo(Memory.Span[(int) range.Start.ByteIndex..]);
 
             // Notify changes.
             OnChanged(new BinaryDocumentChange(BinaryDocumentChangeType.Modify, range));

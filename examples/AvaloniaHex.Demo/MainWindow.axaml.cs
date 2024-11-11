@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
@@ -67,17 +68,12 @@ namespace AvaloniaHex.Demo
         {
             try
             {
-                var document = new ByteArrayBinaryDocument(await File.ReadAllBytesAsync(filePath));
+                var document = new MemoryBinaryDocument(await File.ReadAllBytesAsync(filePath));
 
                 _currentFilePath = filePath;
-                Title = $"{_currentFilePath} - AvaloniaHex.Demo";
-
-                if (MainHexEditor.Document is not null)
-                    MainHexEditor.Document.Changed -= DocumentOnChanged;
                 MainHexEditor.Document = document;
-                MainHexEditor.Document.Changed += DocumentOnChanged;
-
                 StatusLabel.Content = $"Opened file {filePath}.";
+                Title = $"{_currentFilePath} - AvaloniaHex.Demo";
             }
             catch (Exception ex)
             {
@@ -85,23 +81,51 @@ namespace AvaloniaHex.Demo
             }
         }
 
-        private async Task SaveFile(string filePath)
+        private Task OpenFileUsingMmio(string filePath)
         {
-            if (MainHexEditor.Document is not ByteArrayBinaryDocument document)
-            {
-                StatusLabel.Content = "Cannot save this document!";
-                return;
-            }
-
             try
             {
-                await File.WriteAllBytesAsync(filePath, document.Data);
+                var file = MemoryMappedFile.CreateFromFile(filePath, FileMode.OpenOrCreate);
+                var document = new MemoryMappedBinaryDocument(file, false);
+
+                _currentFilePath = filePath;
+                MainHexEditor.Document = document;
+                StatusLabel.Content = $"Opened file {filePath} via MMIO.";
+                Title = $"{_currentFilePath} (MMIO) - AvaloniaHex.Demo";
+            }
+            catch (Exception ex)
+            {
+                StatusLabel.Content = $"Failed to read file: {ex.Message}";
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private async Task SaveFile(string filePath)
+        {
+            try
+            {
+                switch (MainHexEditor.Document)
+                {
+                    case MemoryBinaryDocument document:
+                        await using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                            await fs.WriteAsync(document.Memory);
+                        break;
+
+                    case MemoryMappedBinaryDocument document:
+                        if (_currentFilePath != filePath)
+                            throw new ArgumentException("Cannot save MMIO document to another file.");
+                        document.Flush();
+                        break;
+
+                    default:
+                        throw new ArgumentException("Cannot save this type of document!");
+                }
 
                 _currentFilePath = filePath;
                 Title = $"{_currentFilePath} - AvaloniaHex.Demo";
                 _changesHighlighter.Ranges.Clear();
                 MainHexEditor.HexView.InvalidateVisualLines();
-
                 StatusLabel.Content = $"Saved file {filePath}.";
             }
             catch (Exception ex)
@@ -121,31 +145,36 @@ namespace AvaloniaHex.Demo
             {
                 Title = "Open File",
                 AllowMultiple = false,
-                FileTypeFilter = new[]
-                {
+                FileTypeFilter =
+                [
                     new FilePickerFileType("All files")
                     {
-                        Patterns = new[] {"*"}
+                        Patterns = ["*"]
                     }
-                }
+                ]
             });
 
             if (files.Count != 0 && files[0].TryGetLocalPath() is { } path)
                 await OpenFile(path);
         }
 
-        private void DocumentOnChanged(object? sender, BinaryDocumentChange change)
+        private async void OpenMmioOnClick(object? sender, RoutedEventArgs e)
         {
-            _changesHighlighter.Ranges.Add(change.AffectedRange);
-        }
+            var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Open File (MMIO)",
+                AllowMultiple = false,
+                FileTypeFilter =
+                [
+                    new FilePickerFileType("All files")
+                    {
+                        Patterns = ["*"]
+                    }
+                ]
+            });
 
-        private void MainHexEditorOnDocumentChanged(object? sender, DocumentChangedEventArgs e)
-        {
-            _changesHighlighter.Ranges.Clear();
-            if (e.Old is not null)
-                e.Old.Changed -= DocumentOnChanged;
-            if (e.New is not null)
-                e.New.Changed += DocumentOnChanged;
+            if (files.Count != 0 && files[0].TryGetLocalPath() is { } path)
+                await OpenFileUsingMmio(path);
         }
 
         private async void SaveAsOnClick(object? sender, RoutedEventArgs e)
@@ -154,13 +183,13 @@ namespace AvaloniaHex.Demo
             {
                 Title = "Save File",
                 SuggestedFileName = _currentFilePath,
-                FileTypeChoices = new[]
-                {
+                FileTypeChoices =
+                [
                     new FilePickerFileType("All files")
                     {
-                        Patterns = new[] {"*"}
+                        Patterns = ["*"]
                     }
-                }
+                ]
             });
 
             if (file?.TryGetLocalPath() is { } path)
@@ -300,6 +329,20 @@ namespace AvaloniaHex.Demo
         {
             var range = MainHexEditor.Selection.Range;
             MainHexEditor.Document?.WriteBytes(range.Start.ByteIndex, new byte[range.ByteLength]);
+        }
+
+        private void MainHexEditorOnDocumentChanged(object? sender, DocumentChangedEventArgs e)
+        {
+            _changesHighlighter.Ranges.Clear();
+            if (e.Old is not null)
+                e.Old.Changed -= DocumentOnChanged;
+            if (e.New is not null)
+                e.New.Changed += DocumentOnChanged;
+        }
+
+        private void DocumentOnChanged(object? sender, BinaryDocumentChange change)
+        {
+            _changesHighlighter.Ranges.Add(change.AffectedRange);
         }
     }
 }
