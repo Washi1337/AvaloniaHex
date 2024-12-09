@@ -38,6 +38,9 @@ public class BitRangeUnion : IReadOnlyBitRangeUnion, ICollection<BitRange>
     /// <inheritdoc />
     public BitRange EnclosingRange => _ranges.Count == 0 ? BitRange.Empty : new(_ranges[0].Start, _ranges[^1].End);
 
+    /// <inheritdoc />
+    public bool IsFragmented => _ranges.Count > 1;
+
     /// <inheritdoc cref="IReadOnlyCollection{T}.Count" />
     public int Count => _ranges.Count;
 
@@ -150,7 +153,7 @@ public class BitRangeUnion : IReadOnlyBitRangeUnion, ICollection<BitRange>
             if (!_ranges[i].OverlapsWith(item))
                 break;
 
-            if (_ranges[i].Contains(item))
+            if (_ranges[i].Contains(new BitRange(item.Start, item.End.NextOrMax())))
             {
                 // The range contains the entire range-to-remove, split up the range.
                 var (a, rest) = _ranges[i].Split(item.Start);
@@ -176,7 +179,7 @@ public class BitRangeUnion : IReadOnlyBitRangeUnion, ICollection<BitRange>
                 // We are truncating the current range from the left.
                 _ranges[i] = _ranges[i].Clamp(new BitRange(item.End, BitLocation.Maximum));
             }
-            else if (item.End > _ranges[i].End)
+            else if (item.End >= _ranges[i].End)
             {
                 // We are truncating the current range from the right.
                 _ranges[i] = _ranges[i].Clamp(new BitRange(BitLocation.Minimum, item.Start));

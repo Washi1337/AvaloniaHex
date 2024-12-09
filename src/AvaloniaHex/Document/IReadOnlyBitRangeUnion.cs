@@ -13,6 +13,11 @@ public interface IReadOnlyBitRangeUnion : IReadOnlyCollection<BitRange>, INotify
     BitRange EnclosingRange { get; }
 
     /// <summary>
+    /// Gets a value indicating whether the union consists of multiple disjoint ranges.
+    /// </summary>
+    bool IsFragmented { get; }
+
+    /// <summary>
     /// Determines whether the provided location is within the included ranges.
     /// </summary>
     /// <param name="location">The location.</param>

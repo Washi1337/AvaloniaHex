@@ -480,7 +480,14 @@ public class HexView : Control, ILogicalScrollable
             // Exact match?
             var currentLine = _visualLines[i];
             if (currentLine.Range.Start == range.Start)
+            {
+                // Edge-case: if our range is not exactly right, the line's range is outdated (e.g., as a result of
+                // inserting or removing a character at the end of the document).
+                if (currentLine.Range.End != range.End)
+                    _visualLines[i] = currentLine = new VisualBytesLine(this, range, Columns.Count);
+
                 return currentLine;
+            }
 
             // If the next line is further than the requested start, the line does not exist.
             if (currentLine.Range.Start > range.Start)
@@ -662,7 +669,20 @@ public class HexView : Control, ILogicalScrollable
 
     private void DocumentOnChanged(object? sender, BinaryDocumentChange e)
     {
-        InvalidateVisualLines(e.AffectedRange);
+        switch (e.Type)
+        {
+            case BinaryDocumentChangeType.Modify:
+                InvalidateVisualLines(e.AffectedRange);
+                break;
+
+            case BinaryDocumentChangeType.Insert:
+            case BinaryDocumentChangeType.Remove:
+                InvalidateVisualLines(e.AffectedRange.ExtendTo(Document!.ValidRanges.EnclosingRange.End));
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
     }
 
     /// <summary>

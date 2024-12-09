@@ -11,6 +11,7 @@ using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 using AvaloniaHex.Document;
+using AvaloniaHex.Editing;
 using AvaloniaHex.Rendering;
 
 namespace AvaloniaHex.Demo
@@ -56,15 +57,16 @@ namespace AvaloniaHex.Demo
 
             MainHexEditor.DocumentChanged += MainHexEditorOnDocumentChanged;
             MainHexEditor.Selection.RangeChanged += SelectionOnRangeChanged;
+            MainHexEditor.Caret.ModeChanged += CaretOnModeChanged;
         }
 
         protected override async void OnLoaded(RoutedEventArgs e)
         {
             base.OnLoaded(e);
-            await OpenFile(typeof(MainWindow).Assembly.Location);
+            await OpenFileAsDynamicBuffer(typeof(MainWindow).Assembly.Location);
         }
 
-        private async Task OpenFile(string filePath)
+        private async Task OpenFileAsFixedBuffer(string filePath)
         {
             try
             {
@@ -73,7 +75,7 @@ namespace AvaloniaHex.Demo
                 _currentFilePath = filePath;
                 MainHexEditor.Document = document;
                 StatusLabel.Content = $"Opened file {filePath}.";
-                Title = $"{_currentFilePath} - AvaloniaHex.Demo";
+                Title = $"{_currentFilePath} (Fixed Buffer) - AvaloniaHex.Demo";
             }
             catch (Exception ex)
             {
@@ -81,7 +83,24 @@ namespace AvaloniaHex.Demo
             }
         }
 
-        private Task OpenFileUsingMmio(string filePath)
+        private async Task OpenFileAsDynamicBuffer(string filePath)
+        {
+            try
+            {
+                var document = new DynamicBinaryDocument(await File.ReadAllBytesAsync(filePath));
+
+                _currentFilePath = filePath;
+                MainHexEditor.Document = document;
+                StatusLabel.Content = $"Opened file {filePath}.";
+                Title = $"{_currentFilePath} (Dynamic Buffer) - AvaloniaHex.Demo";
+            }
+            catch (Exception ex)
+            {
+                StatusLabel.Content = $"Failed to read file: {ex.Message}";
+            }
+        }
+
+        private Task OpenFileAsMmio(string filePath)
         {
             try
             {
@@ -112,6 +131,11 @@ namespace AvaloniaHex.Demo
                             await fs.WriteAsync(document.Memory);
                         break;
 
+                    case DynamicBinaryDocument document:
+                        await using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                            await fs.WriteAsync(document.ToArray());
+                        break;
+
                     case MemoryMappedBinaryDocument document:
                         if (_currentFilePath != filePath)
                             throw new ArgumentException("Cannot save MMIO document to another file.");
@@ -139,11 +163,16 @@ namespace AvaloniaHex.Demo
             StatusLabel.Content = MainHexEditor.Selection.Range.ToString();
         }
 
-        private async void OpenOnClick(object? sender, RoutedEventArgs e)
+        private void CaretOnModeChanged(object? sender, EventArgs e)
+        {
+            ModeLabel.Content = MainHexEditor.Caret.Mode.ToString();
+        }
+
+        private async void OpenFixedOnClick(object? sender, RoutedEventArgs e)
         {
             var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Open File",
+                Title = "Open File (Fixed)",
                 AllowMultiple = false,
                 FileTypeFilter =
                 [
@@ -155,7 +184,26 @@ namespace AvaloniaHex.Demo
             });
 
             if (files.Count != 0 && files[0].TryGetLocalPath() is { } path)
-                await OpenFile(path);
+                await OpenFileAsFixedBuffer(path);
+        }
+
+        private async void OpenDynamicOnClick(object? sender, RoutedEventArgs e)
+        {
+            var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Open File (Dynamic)",
+                AllowMultiple = false,
+                FileTypeFilter =
+                [
+                    new FilePickerFileType("All files")
+                    {
+                        Patterns = ["*"]
+                    }
+                ]
+            });
+
+            if (files.Count != 0 && files[0].TryGetLocalPath() is { } path)
+                await OpenFileAsDynamicBuffer(path);
         }
 
         private async void OpenMmioOnClick(object? sender, RoutedEventArgs e)
@@ -174,7 +222,7 @@ namespace AvaloniaHex.Demo
             });
 
             if (files.Count != 0 && files[0].TryGetLocalPath() is { } path)
-                await OpenFileUsingMmio(path);
+                await OpenFileAsMmio(path);
         }
 
         private async void SaveAsOnClick(object? sender, RoutedEventArgs e)
@@ -322,7 +370,7 @@ namespace AvaloniaHex.Demo
 
         private async void AvaloniaHexDemoOnClick(object? sender, RoutedEventArgs e)
         {
-            await OpenFile(typeof(MainWindow).Assembly.Location);
+            await OpenFileAsDynamicBuffer(typeof(MainWindow).Assembly.Location);
         }
 
         private void OnFillWithZeroesOnClick(object? sender, RoutedEventArgs e)
@@ -342,7 +390,20 @@ namespace AvaloniaHex.Demo
 
         private void DocumentOnChanged(object? sender, BinaryDocumentChange change)
         {
-            _changesHighlighter.Ranges.Add(change.AffectedRange);
+            switch (change.Type)
+            {
+                case BinaryDocumentChangeType.Modify:
+                    _changesHighlighter.Ranges.Add(change.AffectedRange);
+                    break;
+
+                case BinaryDocumentChangeType.Insert:
+                case BinaryDocumentChangeType.Remove:
+                    _changesHighlighter.Ranges.Add(change.AffectedRange.ExtendTo(MainHexEditor.Document!.ValidRanges.EnclosingRange.End));
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
     }
 }

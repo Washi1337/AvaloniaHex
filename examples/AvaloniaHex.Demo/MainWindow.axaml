@@ -26,8 +26,9 @@
         <Menu
             DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <MenuItem Header="_Open" Click="OpenOnClick" HotKey="Ctrl+O" InputGesture="Ctrl+O"/>
-                <MenuItem Header="Open using _MMIO" Click="OpenMmioOnClick" HotKey="Ctrl+Shift+O" InputGesture="Ctrl+Shift+O"/>
+                <MenuItem Header="_Open (Dynamic)" Click="OpenDynamicOnClick" HotKey="Ctrl+O" InputGesture="Ctrl+O"/>
+                <MenuItem Header="Open (_Fixed)" Click="OpenFixedOnClick" HotKey="Ctrl+Alt+O" InputGesture="Ctrl+Alt+O" />
+                <MenuItem Header="Open (_MMIO)" Click="OpenMmioOnClick" HotKey="Ctrl+Shift+O" InputGesture="Ctrl+Shift+O"/>
                 <MenuItem Header="Open E_xample">
                     <MenuItem Header="AvaloniaHex.Demo.exe" Click="AvaloniaHexDemoOnClick" />
                     <MenuItem Header="Segmented Document" Click="SegmentedDocumentOnClick" />
@@ -71,10 +72,10 @@
                     <MenuItem Header="50" Click="ColumnPaddingOnClick" CommandParameter="50"/>
                 </MenuItem>
                 <MenuItem Header="Columns">
-                    <MenuItem Header="Offset" Click="OffsetOnClick" />
-                    <MenuItem Header="Hex" Click="HexOnClick" />
-                    <MenuItem Header="Binary" Click="BinaryOnClick" />
-                    <MenuItem Header="ASCII" Click="AsciiOnClick" />
+                    <MenuItem Header="Offset" Click="OffsetOnClick" ToggleType="CheckBox" IsChecked="True" />
+                    <MenuItem Header="Hex" Click="HexOnClick" ToggleType="CheckBox" IsChecked="True" />
+                    <MenuItem Header="Binary" Click="BinaryOnClick" ToggleType="CheckBox" IsChecked="False" />
+                    <MenuItem Header="ASCII" Click="AsciiOnClick" ToggleType="CheckBox" IsChecked="True" />
                 </MenuItem>
                 <MenuItem Header="Highlighting">
                     <MenuItem Header="Changes" Click="ChangesOnClick"/>
@@ -87,7 +88,9 @@
         <StackPanel
             DockPanel.Dock="Bottom"
             Orientation="Horizontal">
-            <Label x:Name="StatusLabel"/>
+            <Label x:Name="ModeLabel" Content="Overwrite"/>
+            <Separator />
+            <Label x:Name="StatusLabel" />
         </StackPanel>
 
         <avaloniaHex:HexEditor
