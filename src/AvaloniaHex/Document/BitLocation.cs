@@ -55,11 +55,24 @@ public readonly struct BitLocation : IEquatable<BitLocation>, IComparable<BitLoc
     }
 
     /// <summary>
+    /// Creates a single-byte range at the location.
+    /// </summary>
+    /// <returns>The range.</returns>
+    public BitRange ToSingleByteRange() => new(ByteIndex, ByteIndex + 1);
+
+    /// <summary>
     /// Adds a number of bytes to the location.
     /// </summary>
     /// <param name="bytes">The byte count.</param>
     /// <returns>The new location.</returns>
     public BitLocation AddBytes(ulong bytes) => new(ByteIndex + bytes, BitIndex);
+
+    /// <summary>
+    /// Subtracts a number of bytes to the location.
+    /// </summary>
+    /// <param name="bytes">The byte count.</param>
+    /// <returns>The new location.</returns>
+    public BitLocation SubtractBytes(ulong bytes) => new(ByteIndex - bytes, BitIndex);
 
     /// <summary>
     /// Adds a number of bits to the location.
