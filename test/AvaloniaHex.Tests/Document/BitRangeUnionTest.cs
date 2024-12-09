@@ -208,6 +208,19 @@ public class BitRangeUnionTest
     }
 
     [Fact]
+    public void TruncateLeftExact()
+    {
+        var range1 = new BitRange(0x10, 0x20);
+        var set = new BitRangeUnion
+        {
+            range1
+        };
+
+        Assert.True(set.Remove(new BitRange(0x15, 0x20)));
+        Assert.Equal(new[] { new BitRange(0x10, 0x15) }, set);
+    }
+
+    [Fact]
     public void TruncateRight()
     {
         var range1 = new BitRange(0x10, 0x20);
@@ -217,6 +230,19 @@ public class BitRangeUnionTest
         };
 
         Assert.True(set.Remove(new BitRange(0x15, 0x30)));
+        Assert.Equal(new[] { new BitRange(0x10, 0x15) }, set);
+    }
+
+    [Fact]
+    public void TruncateRightExact()
+    {
+        var range1 = new BitRange(0x10, 0x20);
+        var set = new BitRangeUnion
+        {
+            range1
+        };
+
+        Assert.True(set.Remove(new BitRange(0x15, 0x20)));
         Assert.Equal(new[] { new BitRange(0x10, 0x15) }, set);
     }
 

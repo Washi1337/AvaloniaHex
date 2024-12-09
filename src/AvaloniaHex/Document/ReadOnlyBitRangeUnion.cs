@@ -40,6 +40,9 @@ public class ReadOnlyBitRangeUnion : IReadOnlyBitRangeUnion
     public BitRange EnclosingRange => _union.EnclosingRange;
 
     /// <inheritdoc />
+    public bool IsFragmented => _union.IsFragmented;
+
+    /// <inheritdoc />
     public bool Contains(BitLocation location) => _union.Contains(location);
 
     /// <inheritdoc />

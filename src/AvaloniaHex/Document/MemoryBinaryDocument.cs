@@ -1,7 +1,7 @@
 namespace AvaloniaHex.Document;
 
 /// <summary>
-/// Represents a binary document that is backed by an instance of <see cref="Memory{Byte}"/>.
+/// Represents a binary document that is backed by an instance of a fixed <see cref="Memory{Byte}"/> buffer.
 /// </summary>
 public class MemoryBinaryDocument : IBinaryDocument
 {
