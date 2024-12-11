@@ -97,7 +97,7 @@ public class CurrentLineLayer : Layer
         if (line is null)
             return;
 
-        if (Selection.Range.ByteLength == 1)
+        if (Selection.Range.ByteLength <= 1)
             context.DrawRectangle(CurrentLineBackground, CurrentLineBorder, line.Bounds);
     }
 }

@@ -26,6 +26,8 @@
         <Menu
             DockPanel.Dock="Top">
             <MenuItem Header="_File">
+                <MenuItem Header="_New (Dynamic)" Click="NewDynamicOnClick" HotKey="Ctrl+N" InputGesture="Ctrl+N"/>
+                <Separator />
                 <MenuItem Header="_Open (Dynamic)" Click="OpenDynamicOnClick" HotKey="Ctrl+O" InputGesture="Ctrl+O"/>
                 <MenuItem Header="Open (_Fixed)" Click="OpenFixedOnClick" HotKey="Ctrl+Alt+O" InputGesture="Ctrl+Alt+O" />
                 <MenuItem Header="Open (_MMIO)" Click="OpenMmioOnClick" HotKey="Ctrl+Shift+O" InputGesture="Ctrl+Shift+O"/>
@@ -34,6 +36,7 @@
                     <MenuItem Header="Segmented Document" Click="SegmentedDocumentOnClick" />
                     <MenuItem Header="Real Time Changing Document" Click="RealTimeChangingDocumentOnClick" />
                 </MenuItem>
+                <Separator />
                 <MenuItem Header="_Save" Click="SaveOnClick" HotKey="Ctrl+S" InputGesture="Ctrl+S"/>
                 <MenuItem Header="Save _As" Click="SaveAsOnClick" HotKey="Ctrl+S" InputGesture="Ctrl+Shift+S"/>
             </MenuItem>

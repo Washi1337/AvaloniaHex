@@ -266,25 +266,38 @@ public class HexEditor : TemplatedControl
     {
         base.OnTextInput(e);
 
-        if (Document is null)
+        // Are we in a writeable document?
+        if (Document is not {IsReadOnly: false})
             return;
 
-        if (Document.IsReadOnly)
+        // Do we have any text to write into a column?
+        if (string.IsNullOrEmpty(e.Text) || Caret.PrimaryColumn is null)
             return;
 
-        if (Caret.Mode == EditingMode.Insert && !Document.CanInsert)
-            return;
-
-        if (!string.IsNullOrEmpty(e.Text) && Caret.PrimaryColumn is not null)
+        if (Caret.Mode == EditingMode.Insert)
         {
-            var location = Caret.Location;
+            // Can we insert?
+            if (!Document.CanInsert)
+                return;
 
-            if (Caret.PrimaryColumn.HandleTextInput(ref location, e.Text, Caret.Mode))
+            // If we selected something while inserting, a natural expectation is that the selection is deleted first.
+            if (Selection.Range.ByteLength > 1)
             {
-                Caret.Location = location.Clamp(new BitRange(0, Document.Length));
-                UpdateSelection(Caret.Location, false);
+                if (!Document.CanRemove)
+                    return;
+
+                Delete();
             }
         }
+
+        // Dispatch text input to the primary column.
+        var location = Caret.Location;
+        if (!Caret.PrimaryColumn.HandleTextInput(ref location, e.Text, Caret.Mode))
+            return;
+
+        // Update caret location.
+        Caret.Location = location;
+        UpdateSelection(Caret.Location, false);
     }
 
     private async void OnPreviewKeyDown(object? sender, KeyEventArgs e)
@@ -449,11 +462,7 @@ public class HexEditor : TemplatedControl
 
         document.RemoveBytes(selectionRange.Start.ByteIndex, selectionRange.ByteLength);
 
-        Caret.Location = new BitLocation(
-            selectionRange.Start.ByteIndex,
-            column.FirstBitIndex
-        ).Clamp(document.ValidRanges.EnclosingRange);
-
+        Caret.Location = new BitLocation(selectionRange.Start.ByteIndex, column.FirstBitIndex);
         Selection.Range = Caret.Location.ToSingleByteRange();
         _selectionAnchorPoint = null;
     }
@@ -471,7 +480,7 @@ public class HexEditor : TemplatedControl
 
         var selectionRange = Selection.Range;
 
-        if (selectionRange.ByteLength == 1)
+        if (selectionRange.ByteLength <= 1)
         {
             if (Caret.Location.BitIndex == column.FirstBitIndex)
             {
@@ -499,13 +508,8 @@ public class HexEditor : TemplatedControl
             Caret.Location = new BitLocation(selectionRange.Start.ByteIndex, column.FirstBitIndex);
         }
 
-        Caret.Location = Caret.Location.Clamp(document.ValidRanges.EnclosingRange);
         Selection.Range = Caret.Location.ToSingleByteRange();
         _selectionAnchorPoint = null;
-    }
-
-    private void DeleteSelectionAndMoveTo(BitLocation location)
-    {
     }
 
     private void UpdateSelection(BitLocation from, bool expand)

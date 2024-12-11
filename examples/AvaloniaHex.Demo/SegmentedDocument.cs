@@ -47,7 +47,7 @@ public class SegmentedDocument : IBinaryDocument
     public bool CanInsert => false;
 
     /// <inheritdoc />
-    public bool CanRemove => true;
+    public bool CanRemove => false;
 
     /// <inheritdoc />
     public IReadOnlyBitRangeUnion ValidRanges { get; }
