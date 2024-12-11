@@ -266,25 +266,38 @@ public class HexEditor : TemplatedControl
     {
         base.OnTextInput(e);
 
-        if (Document is null)
+        // Are we in a writeable document?
+        if (Document is not {IsReadOnly: false})
             return;
 
-        if (Document.IsReadOnly)
+        // Do we have any text to write into a column?
+        if (string.IsNullOrEmpty(e.Text) || Caret.PrimaryColumn is null)
             return;
 
-        if (Caret.Mode == EditingMode.Insert && !Document.CanInsert)
-            return;
-
-        if (!string.IsNullOrEmpty(e.Text) && Caret.PrimaryColumn is not null)
+        if (Caret.Mode == EditingMode.Insert)
         {
-            var location = Caret.Location;
+            // Can we insert?
+            if (!Document.CanInsert)
+                return;
 
-            if (Caret.PrimaryColumn.HandleTextInput(ref location, e.Text, Caret.Mode))
+            // If we selected something while inserting, a natural expectation is that the selection is deleted first.
+            if (Selection.Range.ByteLength > 1)
             {
-                Caret.Location = location.Clamp(new BitRange(0, Document.Length));
-                UpdateSelection(Caret.Location, false);
+                if (!Document.CanRemove)
+                    return;
+
+                Delete();
             }
         }
+
+        // Dispatch text input to the primary column.
+        var location = Caret.Location;
+        if (!Caret.PrimaryColumn.HandleTextInput(ref location, e.Text, Caret.Mode))
+            return;
+
+        // Update caret location.
+        Caret.Location = location;
+        UpdateSelection(Caret.Location, false);
     }
 
     private async void OnPreviewKeyDown(object? sender, KeyEventArgs e)
@@ -377,6 +390,14 @@ public class HexEditor : TemplatedControl
                     ? EditingMode.Insert
                     : EditingMode.Overwrite;
                 break;
+
+            case Key.Delete:
+                Delete();
+                break;
+
+            case Key.Back:
+                Backspace();
+                break;
         }
     }
 
@@ -407,6 +428,9 @@ public class HexEditor : TemplatedControl
     /// </summary>
     public async Task Paste()
     {
+        if (Caret.Mode == EditingMode.Insert && Document is not {CanInsert: true})
+            return;
+
         var oldLocation = Caret.Location;
         if (Caret.PrimaryColumn is not {} column || TopLevel.GetTopLevel(this)?.Clipboard is not { } clipboard)
             return;
@@ -421,6 +445,71 @@ public class HexEditor : TemplatedControl
 
         Caret.Location = newLocation;
         UpdateSelection(oldLocation, false);
+    }
+
+    /// <summary>
+    /// Deletes the currently selected bytes from the document.
+    /// </summary>
+    public void Delete()
+    {
+        if (Caret.PrimaryColumn is not { } column)
+            return;
+
+        if (Document is not {CanRemove: true} document)
+            return;
+
+        var selectionRange = Selection.Range;
+
+        document.RemoveBytes(selectionRange.Start.ByteIndex, selectionRange.ByteLength);
+
+        Caret.Location = new BitLocation(selectionRange.Start.ByteIndex, column.FirstBitIndex);
+        Selection.Range = Caret.Location.ToSingleByteRange();
+        _selectionAnchorPoint = null;
+    }
+
+    /// <summary>
+    /// Deletes the currently selected bytes and the previous byte from the document.
+    /// </summary>
+    public void Backspace()
+    {
+        if (Caret.PrimaryColumn is not { } column)
+            return;
+
+        if (Document is not {CanRemove: true} document)
+            return;
+
+        var selectionRange = Selection.Range;
+
+        if (selectionRange.ByteLength <= 1)
+        {
+            if (Caret.Location.BitIndex == column.FirstBitIndex)
+            {
+                // If caret is at the left-most cell of a byte, it is more intuitive to have it remove the previous byte.
+                // In this case, we can only perform the deletion if we're not at the beginning of the document.
+                if (selectionRange.Start.ByteIndex != 0)
+                {
+                    document.RemoveBytes(selectionRange.Start.ByteIndex - 1, 1);
+                    Caret.Location = new BitLocation(selectionRange.Start.ByteIndex - 1, column.FirstBitIndex);
+                }
+            }
+            else
+            {
+                // If caret is not at a left-most cell of a byte, it is more intuitive to have it remove the current byte.
+                document.RemoveBytes(selectionRange.Start.ByteIndex, 1);
+                Caret.Location = selectionRange.Start.ByteIndex == 0
+                    ? new BitLocation(0, column.FirstBitIndex)
+                    : new BitLocation(selectionRange.Start.ByteIndex, column.FirstBitIndex);
+            }
+        }
+        else
+        {
+            // Otherwise, simply treat as a normal delete.
+            document.RemoveBytes(selectionRange.Start.ByteIndex, selectionRange.ByteLength);
+            Caret.Location = new BitLocation(selectionRange.Start.ByteIndex, column.FirstBitIndex);
+        }
+
+        Selection.Range = Caret.Location.ToSingleByteRange();
+        _selectionAnchorPoint = null;
     }
 
     private void UpdateSelection(BitLocation from, bool expand)

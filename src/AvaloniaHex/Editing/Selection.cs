@@ -33,6 +33,10 @@ public class Selection
         get => _range;
         set
         {
+            value = HexView.Document is { } document
+                ? value.Clamp(document.ValidRanges.EnclosingRange)
+                : BitRange.Empty;
+
             if (_range != value)
             {
                 _range = value;

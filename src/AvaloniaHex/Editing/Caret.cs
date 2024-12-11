@@ -48,6 +48,10 @@ public sealed class Caret
             if (_mode != value)
             {
                 _mode = value;
+
+                // Force reclamp of caret location.
+                Location = _location;
+
                 OnModeChanged();
             }
         }
@@ -61,6 +65,25 @@ public sealed class Caret
         get => _location;
         set
         {
+            var primaryColumn = PrimaryColumn;
+
+            if (primaryColumn is null || HexView.Document is not {ValidRanges.EnclosingRange: var enclosingRange})
+            {
+                // We have no column or document to select bytes in...
+                value = default;
+            }
+            else if (!enclosingRange.Contains(value))
+            {
+                // Edge-case, if we're not in the document range, align to the extra "virtual" cell at the
+                // end of the document.
+                value = new BitLocation(enclosingRange.End.ByteIndex, primaryColumn.FirstBitIndex);
+            }
+            else
+            {
+                // Otherwise, always make sure we are at a valid cell in the current column.
+                value = primaryColumn.AlignToCell(value);
+            }
+
             if (_location != value)
             {
                 _location = value;
@@ -80,6 +103,10 @@ public sealed class Caret
             if (_primaryColumnIndex != value)
             {
                 _primaryColumnIndex = value;
+
+                // Force reclamp of caret location.
+                Location = _location;
+
                 OnPrimaryColumnChanged();
             }
         }
@@ -111,11 +138,10 @@ public sealed class Caret
     /// </summary>
     public void GoToStartOfDocument()
     {
-        int bitIndex = 0;
-        if (HexView.Columns[PrimaryColumnIndex] is CellBasedColumn column)
-            bitIndex = column.FirstBitIndex;
+        if (PrimaryColumn is not { } primaryColumn)
+            return;
 
-        Location = new BitLocation(0, bitIndex);
+        Location = primaryColumn.GetFirstLocation();
     }
 
     /// <summary>
@@ -123,9 +149,10 @@ public sealed class Caret
     /// </summary>
     public void GoToEndOfDocument()
     {
-        Location = HexView.Document?.Length > 0
-            ? new BitLocation(HexView.Document.Length - 1, 0)
-            : new BitLocation(0, 0);
+        if (PrimaryColumn is not { } primaryColumn)
+            return;
+
+        Location = primaryColumn.GetLastLocation(Mode == EditingMode.Insert);
     }
 
     /// <summary>
@@ -133,12 +160,12 @@ public sealed class Caret
     /// </summary>
     public void GoToStartOfLine()
     {
+        if (PrimaryColumn is not { } primaryColumn)
+            return;
+
         ulong bytesPerLine = (ulong) HexView.ActualBytesPerLine;
         ulong byteIndex = (Location.ByteIndex / bytesPerLine) * bytesPerLine;
-
-        int bitIndex = 0;
-        if (HexView.Columns[PrimaryColumnIndex] is CellBasedColumn column)
-            bitIndex = column.FirstBitIndex;
+        int bitIndex = primaryColumn.FirstBitIndex;
 
         Location = new BitLocation(byteIndex, bitIndex);
     }
@@ -162,7 +189,7 @@ public sealed class Caret
     /// </summary>
     public void GoLeft()
     {
-        if (HexView.Columns[PrimaryColumnIndex] is CellBasedColumn column)
+        if (PrimaryColumn is { } column)
             Location = column.GetPreviousLocation(Location);
     }
 
@@ -197,8 +224,8 @@ public sealed class Caret
     /// </summary>
     public void GoRight()
     {
-        if (HexView.Columns[PrimaryColumnIndex] is CellBasedColumn column)
-            Location = column.GetNextLocation(Location);
+        if (PrimaryColumn is { } column)
+            Location = column.GetNextLocation(Location, Mode == EditingMode.Insert, true);
     }
 
     /// <summary>
@@ -217,15 +244,17 @@ public sealed class Caret
     /// <param name="byteCount">The number of bytes to move.</param>
     public void GoForward(ulong byteCount)
     {
-        if (HexView.Document is null)
+        if (HexView.Document is not {} document || PrimaryColumn is null)
             return;
 
         // Note: We cannot use BitLocation.Clamp due to unsigned overflow that may happen.
 
-        if (HexView.Document.Length < byteCount
-            || Location.ByteIndex >= HexView.Document.Length - byteCount)
+        ulong effectiveDocumentLength = document.Length - (Mode == EditingMode.Insert ? 0u : 1u);
+
+        if (document.Length < byteCount
+            || Location.ByteIndex >= effectiveDocumentLength - byteCount)
         {
-            Location = new BitLocation(HexView.Document.Length - 1, 0);
+            Location = new BitLocation(effectiveDocumentLength, PrimaryColumn.FirstBitIndex);
             return;
         }
 

@@ -100,37 +100,66 @@ public abstract class CellBasedColumn : Column
         if (document is null)
             return false;
 
+        // Pre-process text (e.g., remove spaces etc.)
         input = PrepareTextInput(input);
+
+        // We have special behavior if we are not at the beginning of a byte.
+        bool isAtFirstCell = location.BitIndex == FirstBitIndex;
 
         // Compute affected bytes.
         uint byteCount = (uint)((input.Length - 1) / CellsPerWord + 1);
         var alignedStart = new BitLocation(location.ByteIndex, 0);
         var alignedEnd = new BitLocation(alignedStart.ByteIndex + byteCount, 0);
-        if (location.BitIndex != FirstBitIndex && input.Length > 1)
-            alignedEnd = alignedEnd.AddBits(8);
+        if (!isAtFirstCell && input.Length > 1)
+            alignedEnd = alignedEnd.AddBytes(1);
 
         var affectedRange = new BitRange(alignedStart, alignedEnd);
+
+        // Determine the number of bytes to read from the original document.
+        int originalDataReadCount = 0;
+        switch (mode)
+        {
+            case EditingMode.Overwrite:
+                if (!document.ValidRanges.IsSuperSetOf(affectedRange))
+                    return false;
+
+                // We need to read the original bytes if we are overwriting, as cells do not necessarily encompass entire bytes.
+                originalDataReadCount = (int) affectedRange.ByteLength;
+                break;
+
+            case EditingMode.Insert:
+                // Edge-case, if we are not at the beginning of a byte, we are actually replacing that byte.
+                if (!isAtFirstCell)
+                {
+                    if (document.ValidRanges.IsSuperSetOf(affectedRange))
+                        originalDataReadCount = 1;
+                }
+
+                break;
+        }
 
         // Allocate temporary buffer to write the data into.
         byte[] data = new byte[affectedRange.ByteLength];
 
-        // We need to read the original bytes if we are overwriting, as cells do not necessarily encompass entire bytes.
-        if (mode == EditingMode.Overwrite)
-            document.ReadBytes(location.ByteIndex, data);
+        if (originalDataReadCount > 0)
+            document.ReadBytes(location.ByteIndex, data.AsSpan(0, originalDataReadCount));
 
         // Write all the cells in the temporary buffer.
         var newLocation = location;
         for (int i = 0; i < input.Length; i++)
         {
-            // Are we a valid cell in the document?
-            if (!document.ValidRanges.IsSuperSetOf(new BitRange(newLocation, newLocation.AddBits((ulong) BitsPerCell))))
+            // Are we overwriting in a valid cell in the document?
+            if (mode == EditingMode.Overwrite
+                && !document.ValidRanges.IsSuperSetOf(new BitRange(newLocation, newLocation.AddBits((ulong) BitsPerCell))))
+            {
                 return false;
+            }
 
             // Try handling the textual input according to the column's string format.
             if (!TryWriteCell(data, location, newLocation, input[i]))
                 return false;
 
-            newLocation = GetNextLocation(newLocation);
+            newLocation = GetNextLocation(newLocation, mode == EditingMode.Insert, false);
         }
 
         // Apply changes to document.
@@ -141,7 +170,17 @@ public abstract class CellBasedColumn : Column
                 break;
 
             case EditingMode.Insert:
-                document.InsertBytes(location.ByteIndex, data);
+                if (isAtFirstCell)
+                {
+                    document.InsertBytes(location.ByteIndex, data);
+                }
+                else
+                {
+                    // Edge-case, if we are not at the beginning of a byte, we are actually replacing that byte.
+                    document.WriteBytes(location.ByteIndex, data.AsSpan(0, 1));
+                    document.InsertBytes(location.ByteIndex, data.AsSpan(1));
+                }
+
                 break;
 
             default:
@@ -214,7 +253,7 @@ public abstract class CellBasedColumn : Column
     /// <returns>The bounding box.</returns>
     public  Rect GetRelativeCellBounds(VisualBytesLine line, BitLocation location)
     {
-        ulong relativeByteIndex = location.ByteIndex - line.Range.Start.ByteIndex;
+        ulong relativeByteIndex = location.ByteIndex - line.VirtualRange.Start.ByteIndex;
         int nibbleIndex = (CellsPerWord - 1) - location.BitIndex / BitsPerCell;
 
         return new Rect(
@@ -231,12 +270,17 @@ public abstract class CellBasedColumn : Column
     /// <returns>The bounding box.</returns>
     public Rect GetRelativeGroupBounds(VisualBytesLine line, BitLocation location)
     {
-        ulong relativeByteIndex = location.ByteIndex - line.Range.Start.ByteIndex;
+        ulong relativeByteIndex = location.ByteIndex - line.VirtualRange.Start.ByteIndex;
 
         return new Rect(
             new Point((WordWidth + GroupPadding) * relativeByteIndex, 0),
             new Size(CellSize.Width * CellsPerWord, CellSize.Height)
         );
+    }
+
+    public BitLocation AlignToCell(BitLocation location)
+    {
+        return new BitLocation(location.ByteIndex, location.BitIndex / BitsPerCell * BitsPerCell);
     }
 
     /// <summary>
@@ -246,7 +290,7 @@ public abstract class CellBasedColumn : Column
     public BitLocation GetFirstLocation()
     {
         return HexView?.Document is { } document
-            ? new BitLocation(document.Length - 1, 0)
+            ? new BitLocation(0, FirstBitIndex)
             : default;
     }
 
@@ -254,10 +298,10 @@ public abstract class CellBasedColumn : Column
     /// Gets the location of the last selectable cell.
     /// </summary>
     /// <returns>The location.</returns>
-    public BitLocation GetLastLocation()
+    public BitLocation GetLastLocation(bool includeVirtualCell)
     {
         return HexView?.Document is { } document
-            ? new BitLocation(document.Length - 1, 0)
+            ? new BitLocation(document.Length - (!includeVirtualCell ? 1u : 0u), 0)
             : default;
     }
 
@@ -269,7 +313,7 @@ public abstract class CellBasedColumn : Column
     public BitLocation GetPreviousLocation(BitLocation location)
     {
         if (location.BitIndex < 8 - BitsPerCell)
-            return new BitLocation(location.ByteIndex, location.BitIndex + BitsPerCell);
+            return AlignToCell(new BitLocation(location.ByteIndex, location.BitIndex + BitsPerCell));
 
         if (location.ByteIndex == 0)
             return GetFirstLocation();
@@ -282,16 +326,16 @@ public abstract class CellBasedColumn : Column
     /// </summary>
     /// <param name="location">The location.</param>
     /// <returns>The next cell's location.</returns>
-    public BitLocation GetNextLocation(BitLocation location)
+    public BitLocation GetNextLocation(BitLocation location, bool includeVirtualCell, bool clamp)
     {
         if (HexView is not {Document: { } document})
             return default;
 
         if (location.BitIndex != 0)
-            return new BitLocation(location.ByteIndex, location.BitIndex - BitsPerCell);
+            return AlignToCell(new BitLocation(location.ByteIndex, location.BitIndex - BitsPerCell));
 
-        if (location.ByteIndex >= document.Length - 1)
-            return GetLastLocation();
+        if (clamp && location.ByteIndex >= document.Length - (!includeVirtualCell ? 1u : 0u))
+            return GetLastLocation(includeVirtualCell);
 
         return new BitLocation(location.ByteIndex + 1, 8 - BitsPerCell);
     }
@@ -315,10 +359,10 @@ public abstract class CellBasedColumn : Column
         );
 
         var location = new BitLocation(
-            line.Range.Start.ByteIndex + byteIndex,
+            line.VirtualRange.Start.ByteIndex + byteIndex,
             (CellsPerWord - 1 - nibbleIndex) * BitsPerCell
         );
 
-        return location.Clamp(line.Range);
+        return location.Clamp(line.VirtualRange);
     }
 }

@@ -17,7 +17,7 @@ public static class CellGeometryBuilder
     /// <returns>The geometry, or <c>null</c> if the range is not visible.</returns>
     public static Geometry? CreateBoundingGeometry(CellBasedColumn column, BitRange range)
     {
-        if (column.HexView is null)
+        if (column.HexView is null || range.IsEmpty)
             return null;
 
         var startLine = column.HexView.GetVisualLineByLocation(range.Start);

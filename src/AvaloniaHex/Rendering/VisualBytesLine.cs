@@ -11,11 +11,15 @@ namespace AvaloniaHex.Rendering;
 [DebuggerDisplay("{Range}")]
 public sealed class VisualBytesLine
 {
-    internal VisualBytesLine(HexView hexView, BitRange range, int columnCount)
+    internal VisualBytesLine(HexView hexView, BitRange virtualRange, int columnCount)
     {
         HexView = hexView;
-        Range = range;
-        Data = new byte[range.ByteLength];
+        VirtualRange = virtualRange;
+        Range = HexView.Document is {ValidRanges.EnclosingRange: var enclosingRange}
+            ? virtualRange.Clamp(enclosingRange)
+            : BitRange.Empty;
+
+        Data = new byte[virtualRange.ByteLength];
         ColumnTextLines = new TextLine?[columnCount];
         Segments = new List<VisualBytesLineSegment>();
     }
@@ -24,6 +28,12 @@ public sealed class VisualBytesLine
     /// Gets the parent ehx view the line is visible in.
     /// </summary>
     public HexView HexView { get; }
+
+    /// <summary>
+    /// Gets the bit range the visual line spans. If this line is the last visible line in the document, this may include
+    /// the "virtual" cell to insert into.
+    /// </summary>
+    public BitRange VirtualRange { get; }
 
     /// <summary>
     /// Gets the bit range the visual line spans.
@@ -116,10 +126,13 @@ public sealed class VisualBytesLine
     /// </summary>
     public void Refresh()
     {
-        // Read data
-        HexView.Document!.ReadBytes(Range.Start.ByteIndex, Data);
+        if (HexView.Document is null)
+            return;
 
-        // // Apply transformers
+        // Read data
+        HexView.Document!.ReadBytes(Range.Start.ByteIndex, Data.AsSpan(0, (int) Range.ByteLength));
+
+        // Apply transformers
         Segments.Clear();
         Segments.Add(new VisualBytesLineSegment(Range));
         foreach (var transformer in HexView.LineTransformers)
@@ -130,7 +143,10 @@ public sealed class VisualBytesLine
         {
             var column = HexView.Columns[i];
             if (column.IsVisible)
+            {
+                ColumnTextLines[i]?.Dispose();
                 ColumnTextLines[i] = column.CreateTextLine(this);
+            }
         }
 
         IsValid = true;

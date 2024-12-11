@@ -112,7 +112,7 @@ public readonly struct BitRange : IEquatable<BitRange>
     {
         var start = Start.Max(range.Start);
         var end = End.Min(range.End);
-        if (start >= end)
+        if (start > end)
             return Empty;
 
         return new BitRange(start, end);
