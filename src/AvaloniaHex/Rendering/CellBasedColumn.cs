@@ -159,7 +159,7 @@ public abstract class CellBasedColumn : Column
             if (!TryWriteCell(data, location, newLocation, input[i]))
                 return false;
 
-            newLocation = GetNextLocation(newLocation);
+            newLocation = GetNextLocation(newLocation, mode == EditingMode.Insert, false);
         }
 
         // Apply changes to document.
@@ -253,7 +253,7 @@ public abstract class CellBasedColumn : Column
     /// <returns>The bounding box.</returns>
     public  Rect GetRelativeCellBounds(VisualBytesLine line, BitLocation location)
     {
-        ulong relativeByteIndex = location.ByteIndex - line.Range.Start.ByteIndex;
+        ulong relativeByteIndex = location.ByteIndex - line.VirtualRange.Start.ByteIndex;
         int nibbleIndex = (CellsPerWord - 1) - location.BitIndex / BitsPerCell;
 
         return new Rect(
@@ -270,12 +270,17 @@ public abstract class CellBasedColumn : Column
     /// <returns>The bounding box.</returns>
     public Rect GetRelativeGroupBounds(VisualBytesLine line, BitLocation location)
     {
-        ulong relativeByteIndex = location.ByteIndex - line.Range.Start.ByteIndex;
+        ulong relativeByteIndex = location.ByteIndex - line.VirtualRange.Start.ByteIndex;
 
         return new Rect(
             new Point((WordWidth + GroupPadding) * relativeByteIndex, 0),
             new Size(CellSize.Width * CellsPerWord, CellSize.Height)
         );
+    }
+
+    public BitLocation AlignToCell(BitLocation location)
+    {
+        return new BitLocation(location.ByteIndex, location.BitIndex / BitsPerCell * BitsPerCell);
     }
 
     /// <summary>
@@ -293,10 +298,10 @@ public abstract class CellBasedColumn : Column
     /// Gets the location of the last selectable cell.
     /// </summary>
     /// <returns>The location.</returns>
-    public BitLocation GetLastLocation()
+    public BitLocation GetLastLocation(bool includeVirtualCell)
     {
         return HexView?.Document is { } document
-            ? new BitLocation(document.Length - 1, 0)
+            ? new BitLocation(document.Length - (!includeVirtualCell ? 1u : 0u), 0)
             : default;
     }
 
@@ -308,7 +313,7 @@ public abstract class CellBasedColumn : Column
     public BitLocation GetPreviousLocation(BitLocation location)
     {
         if (location.BitIndex < 8 - BitsPerCell)
-            return new BitLocation(location.ByteIndex, location.BitIndex + BitsPerCell);
+            return AlignToCell(new BitLocation(location.ByteIndex, location.BitIndex + BitsPerCell));
 
         if (location.ByteIndex == 0)
             return GetFirstLocation();
@@ -321,16 +326,16 @@ public abstract class CellBasedColumn : Column
     /// </summary>
     /// <param name="location">The location.</param>
     /// <returns>The next cell's location.</returns>
-    public BitLocation GetNextLocation(BitLocation location)
+    public BitLocation GetNextLocation(BitLocation location, bool includeVirtualCell, bool clamp)
     {
         if (HexView is not {Document: { } document})
             return default;
 
         if (location.BitIndex != 0)
-            return new BitLocation(location.ByteIndex, location.BitIndex - BitsPerCell);
+            return AlignToCell(new BitLocation(location.ByteIndex, location.BitIndex - BitsPerCell));
 
-        if (location.ByteIndex >= document.Length - 1)
-            return GetLastLocation();
+        if (clamp && location.ByteIndex >= document.Length - (!includeVirtualCell ? 1u : 0u))
+            return GetLastLocation(includeVirtualCell);
 
         return new BitLocation(location.ByteIndex + 1, 8 - BitsPerCell);
     }
@@ -354,10 +359,10 @@ public abstract class CellBasedColumn : Column
         );
 
         var location = new BitLocation(
-            line.Range.Start.ByteIndex + byteIndex,
+            line.VirtualRange.Start.ByteIndex + byteIndex,
             (CellsPerWord - 1 - nibbleIndex) * BitsPerCell
         );
 
-        return location.Clamp(line.Range);
+        return location.Clamp(line.VirtualRange);
     }
 }

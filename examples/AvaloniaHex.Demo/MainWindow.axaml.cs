@@ -66,6 +66,13 @@ namespace AvaloniaHex.Demo
             await OpenFileAsDynamicBuffer(typeof(MainWindow).Assembly.Location);
         }
 
+        private void NewDynamicOnClick(object? sender, RoutedEventArgs e)
+        {
+            MainHexEditor.Document = new DynamicBinaryDocument();
+            _currentFilePath = null;
+            Title = $"**NEW** (Dynamic) - AvaloniaHex.Demo";
+        }
+
         private async Task OpenFileAsFixedBuffer(string filePath)
         {
             try
