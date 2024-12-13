@@ -152,7 +152,7 @@ public sealed class Caret
         if (PrimaryColumn is not { } primaryColumn)
             return;
 
-        Location = primaryColumn.GetLastLocation(Mode == EditingMode.Insert);
+        Location = primaryColumn.GetLastLocation(true);
     }
 
     /// <summary>
@@ -225,7 +225,7 @@ public sealed class Caret
     public void GoRight()
     {
         if (PrimaryColumn is { } column)
-            Location = column.GetNextLocation(Location, Mode == EditingMode.Insert, true);
+            Location = column.GetNextLocation(Location, true, true);
     }
 
     /// <summary>
@@ -249,12 +249,10 @@ public sealed class Caret
 
         // Note: We cannot use BitLocation.Clamp due to unsigned overflow that may happen.
 
-        ulong effectiveDocumentLength = document.Length - (Mode == EditingMode.Insert ? 0u : 1u);
-
         if (document.Length < byteCount
-            || Location.ByteIndex >= effectiveDocumentLength - byteCount)
+            || Location.ByteIndex >= document.Length - byteCount)
         {
-            Location = new BitLocation(effectiveDocumentLength, PrimaryColumn.FirstBitIndex);
+            Location = new BitLocation(document.Length, PrimaryColumn.FirstBitIndex);
             return;
         }
 

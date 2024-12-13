@@ -496,18 +496,18 @@ public class HexView : Control, ILogicalScrollable
         {
             // Exact match?
             var currentLine = _visualLines[i];
-            if (currentLine.VirtualRange.Start == range.Start)
+            if (currentLine.Range.Start == range.Start)
             {
                 // Edge-case: if our range is not exactly right, the line's range is outdated (e.g., as a result of
                 // inserting or removing a character at the end of the document).
-                if (currentLine.VirtualRange.End != range.End)
+                if (currentLine.Range.End != range.End)
                     _visualLines[i] = currentLine = new VisualBytesLine(this, range, Columns.Count);
 
                 return currentLine;
             }
 
             // If the next line is further than the requested start, the line does not exist.
-            if (currentLine.VirtualRange.Start > range.Start)
+            if (currentLine.Range.Start > range.Start)
             {
                 newLine = new VisualBytesLine(this, range, Columns.Count);
                 _visualLines.Insert(i, newLine);
