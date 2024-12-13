@@ -278,6 +278,11 @@ public abstract class CellBasedColumn : Column
         );
     }
 
+    /// <summary>
+    /// Aligns the provided location to the beginning of the cell that contains the location.
+    /// </summary>
+    /// <param name="location">The location to align.</param>
+    /// <returns>The aligned location.</returns>
     public BitLocation AlignToCell(BitLocation location)
     {
         return new BitLocation(location.ByteIndex, location.BitIndex / BitsPerCell * BitsPerCell);
@@ -325,6 +330,8 @@ public abstract class CellBasedColumn : Column
     /// Given a bit location, gets the location of the cell after it.
     /// </summary>
     /// <param name="location">The location.</param>
+    /// <param name="includeVirtualCell"><c>true</c> if the virtual cell at the end of the document should be included.</param>
+    /// <param name="clamp"><c>true</c> if the location should be restricted to the current document length.</param>
     /// <returns>The next cell's location.</returns>
     public BitLocation GetNextLocation(BitLocation location, bool includeVirtualCell, bool clamp)
     {
