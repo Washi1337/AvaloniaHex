@@ -7,7 +7,7 @@
         <RepositoryUrl>https://github.com/Washi1337/AvaloniaHex</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <LangVersion>12</LangVersion>
-        <Version>0.1.5</Version>
+        <Version>0.1.6</Version>
         <Deterministic>true</Deterministic>
     </PropertyGroup>
 

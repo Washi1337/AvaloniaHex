@@ -4,7 +4,7 @@
       - main
 
   image: Visual Studio 2022
-  version: 0.1.5-master-build.{build}
+  version: 0.1.6-master-build.{build}
   configuration: Release
 
   before_build:
