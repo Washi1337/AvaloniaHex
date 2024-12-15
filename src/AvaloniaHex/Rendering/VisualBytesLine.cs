@@ -11,16 +11,12 @@ namespace AvaloniaHex.Rendering;
 [DebuggerDisplay("{Range}")]
 public sealed class VisualBytesLine
 {
-    internal VisualBytesLine(HexView hexView, BitRange virtualRange, int columnCount)
+    internal VisualBytesLine(HexView hexView)
     {
         HexView = hexView;
-        VirtualRange = virtualRange;
-        Range = HexView.Document is {ValidRanges.EnclosingRange: var enclosingRange}
-            ? virtualRange.Clamp(enclosingRange)
-            : BitRange.Empty;
 
-        Data = new byte[virtualRange.ByteLength];
-        ColumnTextLines = new TextLine?[columnCount];
+        Data = new byte[hexView.ActualBytesPerLine];
+        ColumnTextLines = new TextLine?[hexView.Columns.Count];
         Segments = new List<VisualBytesLineSegment>();
     }
 
@@ -33,12 +29,12 @@ public sealed class VisualBytesLine
     /// Gets the bit range the visual line spans. If this line is the last visible line in the document, this may include
     /// the "virtual" cell to insert into.
     /// </summary>
-    public BitRange VirtualRange { get; }
+    public BitRange VirtualRange { get; internal set; }
 
     /// <summary>
     /// Gets the bit range the visual line spans.
     /// </summary>
-    public BitRange Range { get; }
+    public BitRange Range { get; internal set; }
 
     /// <summary>
     /// Gets the data that is displayed in the line.
@@ -135,8 +131,10 @@ public sealed class VisualBytesLine
         // Apply transformers
         Segments.Clear();
         Segments.Add(new VisualBytesLineSegment(Range));
-        foreach (var transformer in HexView.LineTransformers)
-            transformer.Transform(HexView, this);
+
+        var transformers = HexView.LineTransformers;
+        for (int i = 0; i < transformers.Count; i++)
+            transformers[i].Transform(HexView, this);
 
         // Create columns
         for (int i = 0; i < HexView.Columns.Count; i++)
