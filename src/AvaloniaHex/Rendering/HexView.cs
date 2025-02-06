@@ -580,7 +580,7 @@ public class HexView : Control, ILogicalScrollable
     /// <returns><c>true</c> if the scroll offset has changed, <c>false</c> otherwise.</returns>
     public bool BringIntoView(BitLocation location)
     {
-        if (location.ByteIndex >= Document?.Length + 1 || FullyVisibleRange.Contains(location))
+        if (location.ByteIndex >= Document?.Length + 1 || FullyVisibleRange.Contains(location) || ActualBytesPerLine == 0)
             return false;
 
         ulong firstLineIndex = FullyVisibleRange.Start.ByteIndex / (ulong) ActualBytesPerLine;
