@@ -1,7 +1,7 @@
 The MIT License (MIT)
 =====================
 
-Copyright © `2024` `Washi`
+Copyright © `2024-2025` `Washi`
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation

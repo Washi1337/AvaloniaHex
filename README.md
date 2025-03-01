@@ -12,7 +12,7 @@ This is a(n experimental) hex editor control for the [Avalonia](https://github.c
 - Modify binary documents in-place.
 - Specify invalid or inaccessible ranges. Useful for documents with "gaps" (e.g., memory views).
 - Many style customization options available with default Light and Dark themes.
-- Custom byte ranges highlighting.
+- Custom byte highlighting.
 - Support for memory mapped files.
 
 ## Binaries
