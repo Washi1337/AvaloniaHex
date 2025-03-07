@@ -29,12 +29,12 @@ public sealed class VisualBytesLine
     /// Gets the bit range the visual line spans. If this line is the last visible line in the document, this may include
     /// the "virtual" cell to insert into.
     /// </summary>
-    public BitRange VirtualRange { get; internal set; }
+    public BitRange VirtualRange { get; private set; }
 
     /// <summary>
     /// Gets the bit range the visual line spans.
     /// </summary>
-    public BitRange Range { get; internal set; }
+    public BitRange Range { get; private set; }
 
     /// <summary>
     /// Gets the data that is displayed in the line.
@@ -101,6 +101,29 @@ public sealed class VisualBytesLine
         }
 
         return null;
+    }
+
+    internal bool SetRange(BitRange virtualRange)
+    {
+        bool hasChanged = false;
+
+        if (VirtualRange != virtualRange)
+        {
+            VirtualRange = virtualRange;
+            hasChanged = true;
+        }
+
+        var range = HexView.Document is { ValidRanges.EnclosingRange: var enclosingRange }
+            ? virtualRange.Clamp(enclosingRange)
+            : BitRange.Empty;
+
+        if (Range != range)
+        {
+            Range = range;
+            hasChanged = true;
+        }
+
+        return hasChanged;
     }
 
     /// <summary>

@@ -46,29 +46,29 @@ internal sealed class VisualBytesLinesBuffer : IReadOnlyList<VisualBytesLine>
         }
     }
 
-    public VisualBytesLine GetOrCreateVisualLine(BitRange range)
+    public VisualBytesLine GetOrCreateVisualLine(BitRange virtualRange)
     {
         VisualBytesLine? newLine = null;
 
         // Find existing line or create a new one, while keeping the list of visual lines ordered by range.
         for (int i = 0; i < _activeLines.Count; i++)
         {
-            // Exact match?
+            // Exact match on start?
             var currentLine = _activeLines[i];
-            if (currentLine.Range.Start == range.Start)
+            if (currentLine.VirtualRange.Start == virtualRange.Start)
             {
-                // Edge-case: if our range is not exactly right, the line's range is outdated (e.g., as a result of
+                // Edge-case: if our range is not exactly the same, the line's range is outdated (e.g., as a result of
                 // inserting or removing a character at the end of the document).
-                if (currentLine.Range.End != range.End)
-                    _activeLines[i] = currentLine = Rent(range);
+                if (currentLine.SetRange(virtualRange))
+                    currentLine.Invalidate();
 
                 return currentLine;
             }
 
             // If the next line is further than the requested start, the line does not exist.
-            if (currentLine.Range.Start > range.Start)
+            if (currentLine.Range.Start > virtualRange.Start)
             {
-                newLine = Rent(range);
+                newLine = Rent(virtualRange);
                 _activeLines.Insert(i, newLine);
                 break;
             }
@@ -77,7 +77,7 @@ internal sealed class VisualBytesLinesBuffer : IReadOnlyList<VisualBytesLine>
         // We didn't find any line for the location, add it to the end.
         if (newLine is null)
         {
-            newLine = Rent(range);
+            newLine = Rent(virtualRange);
             _activeLines.Add(newLine);
         }
 
@@ -107,14 +107,8 @@ internal sealed class VisualBytesLinesBuffer : IReadOnlyList<VisualBytesLine>
     private VisualBytesLine Rent(BitRange virtualRange)
     {
         var line = GetPooledLine();
-
-        line.VirtualRange = virtualRange;
-        line.Range = _owner.Document is { ValidRanges.EnclosingRange: var enclosingRange }
-            ? virtualRange.Clamp(enclosingRange)
-            : BitRange.Empty;
-
+        line.SetRange(virtualRange);
         line.Invalidate();
-
         return line;
     }
 
