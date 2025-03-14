@@ -147,7 +147,7 @@ public abstract class Column : Visual
         if (arg1.HexView is null)
             return;
 
-        arg1.HexView.InvalidateArrange();
+        arg1.HexView.InvalidateVisualLines();
         foreach (var layer in arg1.HexView.Layers)
             layer.InvalidateVisual();
     }
