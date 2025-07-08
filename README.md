@@ -7,13 +7,13 @@ This is a(n experimental) hex editor control for the [Avalonia](https://github.c
 
 ## Features
 
-- Display binary data in hex, binary and ASCII.
-- Adjust the displayed bytes per line manually or automatically.
-- Modify binary documents in-place.
-- Specify invalid or inaccessible ranges. Useful for documents with "gaps" (e.g., memory views).
-- Many style customization options available with default Light and Dark themes.
-- Custom byte highlighting.
-- Support for memory mapped files.
+- [x] Display binary data in hex, binary, and ASCII. Extensible with custom column rendering.
+- [x] Adjust the displayed bytes per line manually or automatically.
+- [x] Modify binary documents in-place or resize documents dynamically.
+- [x] Support for documents with non-contiguous backing buffers and/or non-zero base addresses. Useful for documents with "gaps" (e.g., memory views).
+- [x] Many style customization options available with default Light and Dark themes.
+- [x] Custom syntax (byte) highlighting.
+- [x] Support for memory mapped files.
 
 ## Binaries
 
