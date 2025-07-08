@@ -474,7 +474,7 @@ public class HexView : Control, ILogicalScrollable
 
         // Compute full visible range (including lines that are only slightly visible).
         VisibleRange = _visualLines.Count == 0
-            ? new BitRange(Document.Length, Document.Length)
+            ? new BitRange(enclosingRange.End, enclosingRange.End)
             : new BitRange(startLocation, currentRange.End);
 
         // Cut off excess visual lines.
@@ -587,12 +587,17 @@ public class HexView : Control, ILogicalScrollable
     /// <returns><c>true</c> if the scroll offset has changed, <c>false</c> otherwise.</returns>
     public bool BringIntoView(BitLocation location)
     {
-        if (location.ByteIndex >= Document?.Length + 1 || FullyVisibleRange.Contains(location) || ActualBytesPerLine == 0)
+        if (Document is not { ValidRanges.EnclosingRange: var enclosingRange }
+            || location.ByteIndex >= enclosingRange.End.ByteIndex + 1
+            || FullyVisibleRange.Contains(location)
+            || ActualBytesPerLine == 0)
+        {
             return false;
+        }
 
         ulong firstLineIndex = FullyVisibleRange.Start.ByteIndex / (ulong) ActualBytesPerLine;
         ulong lastLineIndex = (FullyVisibleRange.End.ByteIndex - 1) / (ulong) ActualBytesPerLine;
-        ulong targetLineIndex = location.ByteIndex / (ulong) ActualBytesPerLine;
+        ulong targetLineIndex = (location.ByteIndex - enclosingRange.Start.ByteIndex) / (ulong) ActualBytesPerLine;
 
         ulong newIndex;
 

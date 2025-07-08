@@ -32,7 +32,8 @@
                 <MenuItem Header="Open (_Fixed)" Click="OpenFixedOnClick" HotKey="Ctrl+Alt+O" InputGesture="Ctrl+Alt+O" />
                 <MenuItem Header="Open (_MMIO)" Click="OpenMmioOnClick" HotKey="Ctrl+Shift+O" InputGesture="Ctrl+Shift+O"/>
                 <MenuItem Header="Open E_xample">
-                    <MenuItem Header="AvaloniaHex.Demo.exe" Click="AvaloniaHexDemoOnClick" />
+                    <MenuItem Header="AvaloniaHex.Demo.exe (Dynamic)" Click="AvaloniaHexDemoDynamicOnClick" />
+                    <MenuItem Header="AvaloniaHex.Demo.exe (Fixed)" Click="AvaloniaHexDemoFixedOnClick" />
                     <MenuItem Header="Segmented Document" Click="SegmentedDocumentOnClick" />
                     <MenuItem Header="Segmented Document (Worst Case)" Click="SegmentedDocumentWorstCaseOnClick" />
                     <MenuItem Header="Real Time Changing Document" Click="RealTimeChangingDocumentOnClick" />

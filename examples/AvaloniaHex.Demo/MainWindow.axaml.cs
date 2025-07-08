@@ -392,9 +392,14 @@ namespace AvaloniaHex.Demo
             MainHexEditor.Document = document;
         }
 
-        private async void AvaloniaHexDemoOnClick(object? sender, RoutedEventArgs e)
+        private async void AvaloniaHexDemoDynamicOnClick(object? sender, RoutedEventArgs e)
         {
             await OpenFileAsDynamicBuffer(typeof(MainWindow).Assembly.Location);
+        }
+
+        private async void AvaloniaHexDemoFixedOnClick(object? sender, RoutedEventArgs e)
+        {
+            await OpenFileAsFixedBuffer(typeof(MainWindow).Assembly.Location);
         }
 
         private void OnFillWithZeroesOnClick(object? sender, RoutedEventArgs e)

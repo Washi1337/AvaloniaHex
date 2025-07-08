@@ -79,7 +79,7 @@ public class SegmentedDocument : IBinaryDocument
     public void ReadBytes(ulong offset, Span<byte> buffer)
     {
         int bufferIndex = 0;
-        while (bufferIndex < buffer.Length && offset < Length)
+        while (bufferIndex < buffer.Length && offset < ValidRanges.EnclosingRange.End.ByteIndex)
         {
             // Find mapped segment for this offset.
             if (!TryGetMappingIndex(offset, out int mappingIndex))

@@ -55,8 +55,8 @@ public class Selection
     /// </summary>
     public void SelectAll()
     {
-        Range = HexView.Document is not null
-            ? new BitRange(0, HexView.Document.Length)
+        Range = HexView is { Document.ValidRanges.EnclosingRange: var enclosingRange }
+            ? enclosingRange
             : default;
     }
 }

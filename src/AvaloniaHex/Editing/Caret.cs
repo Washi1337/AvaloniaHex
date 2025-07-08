@@ -74,9 +74,11 @@ public sealed class Caret
             }
             else if (!enclosingRange.Contains(value))
             {
-                // Edge-case, if we're not in the document range, align to the extra "virtual" cell at the
-                // end of the document.
-                value = new BitLocation(enclosingRange.End.ByteIndex, primaryColumn.FirstBitIndex);
+                // Edge-case, we may not be in the enclosing document range
+                // (e.g., virtual cell at the end of the document or trying to move before first valid range).
+                value = value < enclosingRange.Start
+                    ? new BitLocation(enclosingRange.Start.ByteIndex, primaryColumn.FirstBitIndex)
+                    : new BitLocation(enclosingRange.End.ByteIndex, primaryColumn.FirstBitIndex);
             }
             else
             {
@@ -163,8 +165,13 @@ public sealed class Caret
         if (PrimaryColumn is not { } primaryColumn)
             return;
 
+        if (HexView is not { Document.ValidRanges.EnclosingRange: var enclosingRange })
+            return;
+
         ulong bytesPerLine = (ulong) HexView.ActualBytesPerLine;
-        ulong byteIndex = (Location.ByteIndex / bytesPerLine) * bytesPerLine;
+        ulong lineIndex = (Location.ByteIndex - enclosingRange.Start.ByteIndex) / bytesPerLine;
+
+        ulong byteIndex = enclosingRange.Start.ByteIndex + lineIndex * bytesPerLine;
         int bitIndex = primaryColumn.FirstBitIndex;
 
         Location = new BitLocation(byteIndex, bitIndex);
@@ -175,11 +182,16 @@ public sealed class Caret
     /// </summary>
     public void GoToEndOfLine()
     {
-        if (HexView.Document is null)
+        if (HexView is not { Document.ValidRanges.EnclosingRange: var enclosingRange })
             return;
 
         ulong bytesPerLine = (ulong) HexView.ActualBytesPerLine;
-        ulong byteIndex = Math.Min(((Location.ByteIndex / bytesPerLine) + 1) * bytesPerLine, HexView.Document.Length) - 1;
+        ulong lineIndex = (Location.ByteIndex - enclosingRange.Start.ByteIndex) / bytesPerLine;
+
+        ulong byteIndex = Math.Min(
+            enclosingRange.Start.ByteIndex + (lineIndex + 1) * bytesPerLine,
+            enclosingRange.End.ByteIndex
+        ) - 1;
 
         Location = new BitLocation(byteIndex, 0);
     }
@@ -209,14 +221,14 @@ public sealed class Caret
     /// <param name="byteCount">The number of bytes to move.</param>
     public void GoBackward(ulong byteCount)
     {
-        if (HexView.Document is null || PrimaryColumn is null)
+        if (HexView is not { Document.ValidRanges.EnclosingRange: var enclosingRange } || PrimaryColumn is null)
             return;
 
         // Note: We cannot use BitLocation.Clamp due to unsigned overflow that may happen.
 
-        Location = Location.ByteIndex >= byteCount
+        Location = Location.ByteIndex - enclosingRange.Start.ByteIndex >= byteCount
             ? new BitLocation(Location.ByteIndex - byteCount, Location.BitIndex)
-            : new BitLocation(0, PrimaryColumn.FirstBitIndex);
+            : new BitLocation(enclosingRange.Start.ByteIndex, PrimaryColumn.FirstBitIndex);
     }
 
     /// <summary>
@@ -244,15 +256,15 @@ public sealed class Caret
     /// <param name="byteCount">The number of bytes to move.</param>
     public void GoForward(ulong byteCount)
     {
-        if (HexView.Document is not {} document || PrimaryColumn is null)
+        if (HexView is not { Document.ValidRanges.EnclosingRange: var enclosingRange } || PrimaryColumn is null)
             return;
 
         // Note: We cannot use BitLocation.Clamp due to unsigned overflow that may happen.
 
-        if (document.Length < byteCount
-            || Location.ByteIndex >= document.Length - byteCount)
+        if (enclosingRange.End.ByteIndex < byteCount
+            || Location.ByteIndex >= enclosingRange.End.ByteIndex - byteCount)
         {
-            Location = new BitLocation(document.Length, PrimaryColumn.FirstBitIndex);
+            Location = new BitLocation(enclosingRange.End.ByteIndex, PrimaryColumn.FirstBitIndex);
             return;
         }
 

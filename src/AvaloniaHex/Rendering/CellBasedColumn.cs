@@ -294,8 +294,8 @@ public abstract class CellBasedColumn : Column
     /// <returns>The location.</returns>
     public BitLocation GetFirstLocation()
     {
-        return HexView?.Document is { } document
-            ? new BitLocation(0, FirstBitIndex)
+        return HexView is { Document.ValidRanges.EnclosingRange: var enclosingRange }
+            ? new BitLocation(enclosingRange.Start.ByteIndex, FirstBitIndex)
             : default;
     }
 
@@ -305,8 +305,8 @@ public abstract class CellBasedColumn : Column
     /// <returns>The location.</returns>
     public BitLocation GetLastLocation(bool includeVirtualCell)
     {
-        return HexView?.Document is { } document
-            ? new BitLocation(document.Length - (!includeVirtualCell ? 1u : 0u), 0)
+        return HexView is { Document.ValidRanges.EnclosingRange: var enclosingRange }
+            ? new BitLocation(enclosingRange.End.ByteIndex - (!includeVirtualCell ? 1u : 0u), 0)
             : default;
     }
 
@@ -320,8 +320,11 @@ public abstract class CellBasedColumn : Column
         if (location.BitIndex < 8 - BitsPerCell)
             return AlignToCell(new BitLocation(location.ByteIndex, location.BitIndex + BitsPerCell));
 
-        if (location.ByteIndex == 0)
+        if (HexView is not { Document.ValidRanges.EnclosingRange: var enclosingRange }
+            || location.ByteIndex == enclosingRange.Start.ByteIndex)
+        {
             return GetFirstLocation();
+        }
 
         return new BitLocation(location.ByteIndex - 1, 0);
     }
@@ -335,13 +338,13 @@ public abstract class CellBasedColumn : Column
     /// <returns>The next cell's location.</returns>
     public BitLocation GetNextLocation(BitLocation location, bool includeVirtualCell, bool clamp)
     {
-        if (HexView is not {Document: { } document})
+        if (HexView is not { Document.ValidRanges.EnclosingRange: var enclosingRange })
             return default;
 
         if (location.BitIndex != 0)
             return AlignToCell(new BitLocation(location.ByteIndex, location.BitIndex - BitsPerCell));
 
-        if (clamp && location.ByteIndex >= document.Length - (!includeVirtualCell ? 1u : 0u))
+        if (clamp && location.ByteIndex >= enclosingRange.End.ByteIndex - (!includeVirtualCell ? 1u : 0u))
             return GetLastLocation(includeVirtualCell);
 
         return new BitLocation(location.ByteIndex + 1, 8 - BitsPerCell);
