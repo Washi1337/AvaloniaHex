@@ -1,0 +1,29 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Width="400"
+        Height="120"
+        x:Class="AvaloniaHex.Demo.InputDialog"
+        Title="InputDialog"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+    <DockPanel Margin="10">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
+            <StackPanel.Styles>
+                <Style Selector="Button">
+                    <Setter Property="Margin" Value="3" />
+                    <Setter Property="Padding" Value="10, 3" />
+                </Style>
+            </StackPanel.Styles>
+            <Button x:Name="OKButton" IsDefault="True" Content="_OK" Click="OKButtonOnClick" />
+            <Button IsCancel="True" Content="_Cancel" Click="CancelButtonOnClick" />
+        </StackPanel>
+
+        <StackPanel>
+            <Label x:Name="PromptLabel" Content="Enter Value" />
+            <TextBox x:Name="InputTextBox" TextChanged="InputTextBoxOnTextChanged" />
+        </StackPanel>
+    </DockPanel>
+</Window>

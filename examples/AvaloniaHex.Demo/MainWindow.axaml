@@ -43,7 +43,8 @@
                 <MenuItem Header="Save _As" Click="SaveAsOnClick" HotKey="Ctrl+S" InputGesture="Ctrl+Shift+S"/>
             </MenuItem>
             <MenuItem Header="_Edit">
-                <MenuItem Header="Fill With Zeroes" Click="OnFillWithZeroesOnClick"/>
+                <MenuItem Header="Go To Offset" Click="GoToOffsetOnClick" HotKey="Ctrl+G" InputGesture="Ctrl+G" />
+                <MenuItem Header="Fill Selection With..." Click="FillSelectionWithOnClick" HotKey="Ctrl+Shift+F" InputGesture="Ctrl+Shift+F" />
             </MenuItem>
             <MenuItem Header="_View">
                 <MenuItem Header="Toggle _Uppercase" Click="UppercaseOnClick"/>

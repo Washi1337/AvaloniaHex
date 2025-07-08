@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
@@ -402,12 +403,6 @@ namespace AvaloniaHex.Demo
             await OpenFileAsFixedBuffer(typeof(MainWindow).Assembly.Location);
         }
 
-        private void OnFillWithZeroesOnClick(object? sender, RoutedEventArgs e)
-        {
-            var range = MainHexEditor.Selection.Range;
-            MainHexEditor.Document?.WriteBytes(range.Start.ByteIndex, new byte[range.ByteLength]);
-        }
-
         private void MainHexEditorOnDocumentChanged(object? sender, DocumentChangedEventArgs e)
         {
             _changesHighlighter.Ranges.Clear();
@@ -433,6 +428,64 @@ namespace AvaloniaHex.Demo
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
+
+        private async void FillSelectionWithOnClick(object? sender, RoutedEventArgs e)
+        {
+            static byte[]? TryGetHexString(string? s)
+            {
+                if (string.IsNullOrEmpty(s))
+                    return null;
+
+                try
+                {
+                    return Convert.FromHexString(s.Replace(" ", ""));
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+
+            var range = MainHexEditor.Selection.Range;
+
+            var dialog = new InputDialog
+            {
+                Prompt = $"Fill {range} with byte sequence (hex):",
+                Watermark = "00 01 02 ...",
+                IsValid = static s=> TryGetHexString(s) is not null,
+            };
+
+            string? result = await dialog.ShowDialog<string?>(this);
+            if (string.IsNullOrEmpty(result))
+                return;
+
+            byte[] sequence = TryGetHexString(result)!;
+            byte[] fullSequence = new byte[range.ByteLength];
+            for (int i = 0; i < fullSequence.Length; i += sequence.Length)
+            {
+                for (int j = 0; j < sequence.Length && i + j < fullSequence.Length; j++)
+                    fullSequence[i + j] = sequence[j];
+            }
+
+            MainHexEditor.Document?.WriteBytes(range.Start.ByteIndex, fullSequence);
+        }
+
+        private async void GoToOffsetOnClick(object? sender, RoutedEventArgs e)
+        {
+            var dialog = new InputDialog
+            {
+                Prompt = "Enter offset (hex):",
+                Input = MainHexEditor.Caret.Location.ByteIndex.ToString("X8"),
+                IsValid = static s=> ulong.TryParse(s, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out _)
+            };
+
+            string? result = await dialog.ShowDialog<string?>(this);
+            if (string.IsNullOrEmpty(result))
+                return;
+
+            MainHexEditor.Caret.Location = new BitLocation(ulong.Parse(result, NumberStyles.HexNumber));
+            MainHexEditor.ResetSelection();
         }
     }
 }

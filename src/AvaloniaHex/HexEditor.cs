@@ -463,8 +463,7 @@ public class HexEditor : TemplatedControl
         document.RemoveBytes(selectionRange.Start.ByteIndex, selectionRange.ByteLength);
 
         Caret.Location = new BitLocation(selectionRange.Start.ByteIndex, column.FirstBitIndex);
-        Selection.Range = Caret.Location.ToSingleByteRange();
-        _selectionAnchorPoint = null;
+        ResetSelection();
     }
 
     /// <summary>
@@ -508,6 +507,14 @@ public class HexEditor : TemplatedControl
             Caret.Location = new BitLocation(selectionRange.Start.ByteIndex, column.FirstBitIndex);
         }
 
+        ResetSelection();
+    }
+
+    /// <summary>
+    /// Resets the selection and selection anchor point to the current caret location.
+    /// </summary>
+    public void ResetSelection()
+    {
         Selection.Range = Caret.Location.ToSingleByteRange();
         _selectionAnchorPoint = null;
     }
