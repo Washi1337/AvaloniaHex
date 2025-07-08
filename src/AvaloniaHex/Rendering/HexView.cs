@@ -337,9 +337,14 @@ public class HexView : Control, ILogicalScrollable
         UpdateColumnBounds();
         UpdateVisualLines(finalSize);
 
-        Extent = Document is not null
-            ? new Size(0, Math.Ceiling((double) Document.Length / ActualBytesPerLine))
-            : default;
+        if (Document is {} document)
+        {
+            Extent = new Size(0, Math.Ceiling((double) document.Length / ActualBytesPerLine));
+        }
+        else
+        {
+            Extent = default;
+        }
 
         bool hasResized = finalSize != Bounds.Size;
 
@@ -443,18 +448,20 @@ public class HexView : Control, ILogicalScrollable
         }
 
         // Otherwise, ensure all visible lines are created.
-
-        var startLocation = new BitLocation((ulong) ScrollOffset.Y * (ulong) ActualBytesPerLine);
+        var enclosingRange = Document.ValidRanges.EnclosingRange;
+        var startLocation = new BitLocation(
+            enclosingRange.Start.ByteIndex + (ulong) ScrollOffset.Y * (ulong) ActualBytesPerLine
+        );
 
         var currentRange = new BitRange(startLocation, startLocation);
 
         double currentY = 0;
-        while (currentY < finalSize.Height && currentRange.End.ByteIndex <= Document.Length)
+        while (currentY < finalSize.Height && currentRange.End <= enclosingRange.End)
         {
             // Get/create next visual line.
             var line = _visualLines.GetOrCreateVisualLine(new BitRange(
                 currentRange.End.ByteIndex,
-                Math.Min(Document.Length + 1, currentRange.End.ByteIndex + (ulong) ActualBytesPerLine)
+                Math.Min(enclosingRange.End.ByteIndex + 1, currentRange.End.ByteIndex + (ulong) ActualBytesPerLine)
             ));
 
             line.EnsureIsValid();
@@ -470,6 +477,9 @@ public class HexView : Control, ILogicalScrollable
             ? new BitRange(Document.Length, Document.Length)
             : new BitRange(startLocation, currentRange.End);
 
+        // Cut off excess visual lines.
+        _visualLines.RemoveOutsideOfRange(VisibleRange);
+
         // Get fully visible byte range.
         if (_visualLines.Count == 0 || !(_visualLines[^1].Bounds.Bottom > finalSize.Height))
         {
@@ -482,9 +492,6 @@ public class HexView : Control, ILogicalScrollable
                 new BitLocation(VisibleRange.End.ByteIndex - (ulong) ActualBytesPerLine, 0)
             );
         }
-
-        // Cut off excess visual lines.
-        _visualLines.RemoveOutsideOfRange(VisibleRange);
     }
 
     /// <summary>

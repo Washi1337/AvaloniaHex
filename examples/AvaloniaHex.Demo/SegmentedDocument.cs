@@ -38,7 +38,7 @@ public class SegmentedDocument : IBinaryDocument
     }
 
     /// <inheritdoc />
-    public ulong Length => _mappings[^1].Range.End.ByteIndex;
+    public ulong Length => _mappings[^1].Range.End.ByteIndex - _mappings[0].Range.Start.ByteIndex;
 
     /// <inheritdoc />
     public bool IsReadOnly => false;

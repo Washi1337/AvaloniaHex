@@ -351,8 +351,8 @@ namespace AvaloniaHex.Demo
             for (int i = 0; i < 10; i++)
             {
                 segments.Add(new SegmentedDocument.Mapping(
-                    (ulong) (i * 2000),
-                    Enumerable.Range(0, 1000).Select(x => (byte) (x & 0xFF)).ToArray()
+                    (ulong) ((i + 1) * 0x2000),
+                    Enumerable.Range(0, 0x1000).Select(x => (byte) (x & 0xFF)).ToArray()
                 ));
             }
 
