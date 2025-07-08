@@ -360,6 +360,23 @@ namespace AvaloniaHex.Demo
             MainHexEditor.Document = new SegmentedDocument(segments);
         }
 
+        private void SegmentedDocumentWorstCaseOnClick(object? sender, RoutedEventArgs e)
+        {
+            var segments = new List<SegmentedDocument.Mapping>();
+
+            // Alternate between valid and invalid ranges (i.e., 00 ?? 02 ?? 04 ?? ...)
+            for (int i = 0; i < 0x1000; i++)
+            {
+                segments.Add(new SegmentedDocument.Mapping(
+                    (ulong) (i * 2),
+                    [(byte) (i * 2)]
+                ));
+            }
+
+            _currentFilePath = null;
+            MainHexEditor.Document = new SegmentedDocument(segments);
+        }
+
         private void RealTimeChangingDocumentOnClick(object? sender, RoutedEventArgs e)
         {
             var document = new RealTimeChangingDocument(5 * 1024, TimeSpan.FromMilliseconds(100));

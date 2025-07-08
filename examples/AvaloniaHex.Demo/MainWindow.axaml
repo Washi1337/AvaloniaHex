@@ -34,6 +34,7 @@
                 <MenuItem Header="Open E_xample">
                     <MenuItem Header="AvaloniaHex.Demo.exe" Click="AvaloniaHexDemoOnClick" />
                     <MenuItem Header="Segmented Document" Click="SegmentedDocumentOnClick" />
+                    <MenuItem Header="Segmented Document (Worst Case)" Click="SegmentedDocumentWorstCaseOnClick" />
                     <MenuItem Header="Real Time Changing Document" Click="RealTimeChangingDocumentOnClick" />
                 </MenuItem>
                 <Separator />

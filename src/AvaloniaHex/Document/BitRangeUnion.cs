@@ -49,17 +49,20 @@ public class BitRangeUnion : IReadOnlyBitRangeUnion, ICollection<BitRange>
 
     private (SearchResult Result, int Index) FindFirstOverlappingRange(BitRange range)
     {
+        // TODO: binary search
+
         range = new BitRange(range.Start, range.End.NextOrMax());
         for (int i = 0; i < _ranges.Count; i++)
         {
-            if (_ranges[i].ExtendTo(_ranges[i].End.NextOrMax()).OverlapsWith(range))
+            var candidate = _ranges[i];
+            if (candidate.ExtendTo(candidate.End.NextOrMax()).OverlapsWith(range))
             {
-                if (_ranges[i].Start >= range.Start)
+                if (candidate.Start >= range.Start)
                     return (SearchResult.PresentAfterIndex, i);
                 return (SearchResult.PresentBeforeIndex, i);
             }
 
-            if (_ranges[i].Start > range.End)
+            if (candidate.Start > range.End)
             {
                 return (SearchResult.NotPresentAtIndex, i);
             }
@@ -134,6 +137,44 @@ public class BitRangeUnion : IReadOnlyBitRangeUnion, ICollection<BitRange>
             return false;
 
         return _ranges[index].OverlapsWith(range);
+    }
+
+    /// <inheritdoc />
+    public int GetOverlappingRanges(BitRange range, Span<BitRange> output)
+    {
+        (var result, int index) = FindFirstOverlappingRange(range);
+        if (result == SearchResult.NotPresentAtIndex)
+            return 0;
+
+        int count = 0;
+        for (int i = index; i < _ranges.Count && count < output.Length; i++)
+        {
+            var current = _ranges[i];
+            if (current.Start >= range.End)
+                break;
+
+            if (current.OverlapsWith(range))
+                output[count++] = current;
+        }
+
+        return count;
+    }
+
+    /// <inheritdoc />
+    public int GetIntersectingRanges(BitRange range, Span<BitRange> output)
+    {
+        // Get overlapping ranges.
+        int count = GetOverlappingRanges(range, output);
+
+        // Cut off first and last ranges.
+        if (count > 0)
+        {
+            output[0] = output[0].Clamp(range);
+            if (count > 1)
+                output[count - 1] = output[count - 1].Clamp(range);
+        }
+
+        return count;
     }
 
     /// <inheritdoc />

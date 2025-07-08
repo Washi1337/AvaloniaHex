@@ -52,6 +52,12 @@ public class ReadOnlyBitRangeUnion : IReadOnlyBitRangeUnion
     public bool IntersectsWith(BitRange range) => _union.IntersectsWith(range);
 
     /// <inheritdoc />
+    public int GetOverlappingRanges(BitRange range, Span<BitRange> output) => _union.GetOverlappingRanges(range, output);
+
+    /// <inheritdoc />
+    public int GetIntersectingRanges(BitRange range, Span<BitRange> output) => _union.GetIntersectingRanges(range, output);
+
+    /// <inheritdoc />
     public BitRangeUnion.Enumerator GetEnumerator() => _union.GetEnumerator();
 
     IEnumerator<BitRange> IEnumerable<BitRange>.GetEnumerator() => _union.GetEnumerator();

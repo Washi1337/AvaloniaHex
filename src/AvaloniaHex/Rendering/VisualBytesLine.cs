@@ -148,18 +148,50 @@ public sealed class VisualBytesLine
         if (HexView.Document is null)
             return;
 
-        // Read data
-        HexView.Document!.ReadBytes(Range.Start.ByteIndex, Data.AsSpan(0, (int) Range.ByteLength));
+        ReadData();
+        CreateLineSegments();
+        CreateColumnTextLines();
 
-        // Apply transformers
+        IsValid = true;
+    }
+
+    private void ReadData()
+    {
+        var document = HexView.Document!;
+        var dataSpan = Data.AsSpan(0, (int) Range.ByteLength);
+
+        // Fast path, just read entire range if possible.
+        if (!document.ValidRanges.IsFragmented)
+        {
+            document.ReadBytes(Range.Start.ByteIndex, dataSpan);
+            return;
+        }
+
+        // Only read valid segments in the line.
+        Span<BitRange> ranges = stackalloc BitRange[dataSpan.Length];
+        int count = document.ValidRanges.GetIntersectingRanges(Range, ranges);
+        for (int i = 0; i < count; i++)
+        {
+            var range = ranges[i];
+            int relativeOffset = (int) (range.Start.ByteIndex - Range.Start.ByteIndex);
+
+            var chunk = dataSpan[relativeOffset..(relativeOffset + (int) range.ByteLength)];
+            document.ReadBytes(range.Start.ByteIndex, chunk);
+        }
+    }
+
+    private void CreateLineSegments()
+    {
         Segments.Clear();
         Segments.Add(new VisualBytesLineSegment(Range));
 
         var transformers = HexView.LineTransformers;
         for (int i = 0; i < transformers.Count; i++)
             transformers[i].Transform(HexView, this);
+    }
 
-        // Create columns
+    private void CreateColumnTextLines()
+    {
         for (int i = 0; i < HexView.Columns.Count; i++)
         {
             var column = HexView.Columns[i];
@@ -169,8 +201,6 @@ public sealed class VisualBytesLine
                 ColumnTextLines[i] = column.CreateTextLine(this);
             }
         }
-
-        IsValid = true;
     }
 
     /// <summary>

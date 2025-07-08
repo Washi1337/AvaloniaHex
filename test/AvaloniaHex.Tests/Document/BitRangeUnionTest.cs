@@ -314,4 +314,70 @@ public class BitRangeUnionTest
         union.Add(new BitRange(40, 50));
         Assert.Equal(new BitRange(0, 50), union.EnclosingRange);
     }
+
+    [Fact]
+    public void GetOverlappingRanges()
+    {
+        var union = new BitRangeUnion
+        {
+            new BitRange(0, 10),
+            new BitRange(20, 30),
+            new BitRange(40, 50),
+        };
+
+        Span<BitRange> ranges = stackalloc BitRange[union.Count];
+
+        ranges.Clear();
+        Assert.Equal(1, union.GetOverlappingRanges(new BitRange(5, 15), ranges));
+        Assert.Equal(new BitRange(0, 10), ranges[0]);
+
+        ranges.Clear();
+        Assert.Equal(1, union.GetOverlappingRanges(new BitRange(25, 35), ranges));
+        Assert.Equal(new BitRange(20, 30), ranges[0]);
+
+        ranges.Clear();
+        Assert.Equal(2, union.GetOverlappingRanges(new BitRange(5, 25), ranges));
+        Assert.Equal([new BitRange(0, 10), new BitRange(20, 30)], ranges[..2]);
+
+        ranges.Clear();
+        Assert.Equal(2, union.GetOverlappingRanges(new BitRange(25, 45), ranges));
+        Assert.Equal([new BitRange(20, 30), new BitRange(40, 50)], ranges[..2]);
+
+        ranges.Clear();
+        Assert.Equal(3, union.GetOverlappingRanges(new BitRange(0, 100), ranges));
+        Assert.Equal([new BitRange(0, 10), new BitRange(20, 30), new BitRange(40, 50)], ranges[..3]);
+    }
+
+    [Fact]
+    public void GetIntersectingRanges()
+    {
+        var union = new BitRangeUnion
+        {
+            new BitRange(0, 10),
+            new BitRange(20, 30),
+            new BitRange(40, 50),
+        };
+
+        Span<BitRange> ranges = stackalloc BitRange[union.Count];
+
+        ranges.Clear();
+        Assert.Equal(1, union.GetIntersectingRanges(new BitRange(5, 15), ranges));
+        Assert.Equal(new BitRange(5, 10), ranges[0]);
+
+        ranges.Clear();
+        Assert.Equal(1, union.GetIntersectingRanges(new BitRange(25, 35), ranges));
+        Assert.Equal(new BitRange(25, 30), ranges[0]);
+
+        ranges.Clear();
+        Assert.Equal(2, union.GetIntersectingRanges(new BitRange(5, 25), ranges));
+        Assert.Equal([new BitRange(5, 10), new BitRange(20, 25)], ranges[..2]);
+
+        ranges.Clear();
+        Assert.Equal(2, union.GetIntersectingRanges(new BitRange(25, 45), ranges));
+        Assert.Equal([new BitRange(25, 30), new BitRange(40, 45)], ranges[..2]);
+
+        ranges.Clear();
+        Assert.Equal(3, union.GetIntersectingRanges(new BitRange(0, 100), ranges));
+        Assert.Equal([new BitRange(0, 10), new BitRange(20, 30), new BitRange(40, 50)], ranges[..3]);
+    }
 }

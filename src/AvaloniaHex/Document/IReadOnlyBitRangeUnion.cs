@@ -35,8 +35,24 @@ public interface IReadOnlyBitRangeUnion : IReadOnlyCollection<BitRange>, INotify
     /// Determines whether the provided range intersects with any of the ranges in the union.
     /// </summary>
     /// <param name="range">The range to test.</param>
-    /// <returns><c>true</c> if the union interesects with the provided range, <c>false</c> otherwise.</returns>
+    /// <returns><c>true</c> if the union intersects with the provided range, <c>false</c> otherwise.</returns>
     bool IntersectsWith(BitRange range);
+
+    /// <summary>
+    /// Collects the disjoint ranges in the union that overlap with the provided range.
+    /// </summary>
+    /// <param name="range">The range to overlap with.</param>
+    /// <param name="output">The output buffer to store the overlapping disjoint ranges in.</param>
+    /// <returns>The number of found disjoint ranges.</returns>
+    int GetOverlappingRanges(BitRange range, Span<BitRange> output);
+
+    /// <summary>
+    /// Collects the intersection of all disjoint ranges that overlap with the provided range.
+    /// </summary>
+    /// <param name="range">The range to intersect with.</param>
+    /// <param name="output">The output buffer to store the intersecting disjoint ranges in.</param>
+    /// <returns>The number of found disjoint ranges.</returns>
+    int GetIntersectingRanges(BitRange range, Span<BitRange> output);
 
     /// <summary>
     /// Gets an enumerator that enumerates all the ranges in the union.
