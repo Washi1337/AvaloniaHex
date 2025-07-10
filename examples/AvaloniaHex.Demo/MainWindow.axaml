@@ -70,18 +70,26 @@
                     <MenuItem Header="32" Click="AdjustOnClick" CommandParameter="32"/>
                     <MenuItem Header="64" Click="AdjustOnClick" CommandParameter="64"/>
                 </MenuItem>
+                <MenuItem Header="Columns">
+                    <MenuItem Header="Offset" Click="OffsetOnClick" ToggleType="CheckBox" IsChecked="True" />
+                    <MenuItem Header="Hex" Click="HexOnClick" ToggleType="CheckBox" IsChecked="True" />
+                    <MenuItem Header="Binary" Click="BinaryOnClick" ToggleType="CheckBox" IsChecked="False" />
+                    <MenuItem Header="ASCII" Click="AsciiOnClick" ToggleType="CheckBox" IsChecked="True" />
+                </MenuItem>
+                <MenuItem Header="Column Headers">
+                    <MenuItem Header="Visible" Click="HeadersVisibleOnClick" ToggleType="CheckBox" IsChecked="True"/>
+                    <Separator />
+                    <MenuItem Header="Offset" Click="OffsetHeaderVisibleOnClick"  ToggleType="CheckBox" IsChecked="False" />
+                    <MenuItem Header="Hex" Click="HexHeaderVisibleOnClick" ToggleType="CheckBox" IsChecked="True"/>
+                    <MenuItem Header="Binary" Click="BinaryHeaderVisibleOnClick" ToggleType="CheckBox" IsChecked="True"/>
+                    <MenuItem Header="ASCII" Click="AsciiHeaderVisibleOnClick" ToggleType="CheckBox" IsChecked="False"/>
+                </MenuItem>
                 <MenuItem Header="Column Padding">
                     <MenuItem Header="10"  Click="ColumnPaddingOnClick" CommandParameter="10"/>
                     <MenuItem Header="20" Click="ColumnPaddingOnClick" CommandParameter="20"/>
                     <MenuItem Header="30" Click="ColumnPaddingOnClick" CommandParameter="30"/>
                     <MenuItem Header="40" Click="ColumnPaddingOnClick" CommandParameter="40"/>
                     <MenuItem Header="50" Click="ColumnPaddingOnClick" CommandParameter="50"/>
-                </MenuItem>
-                <MenuItem Header="Columns">
-                    <MenuItem Header="Offset" Click="OffsetOnClick" ToggleType="CheckBox" IsChecked="True" />
-                    <MenuItem Header="Hex" Click="HexOnClick" ToggleType="CheckBox" IsChecked="True" />
-                    <MenuItem Header="Binary" Click="BinaryOnClick" ToggleType="CheckBox" IsChecked="False" />
-                    <MenuItem Header="ASCII" Click="AsciiOnClick" ToggleType="CheckBox" IsChecked="True" />
                 </MenuItem>
                 <MenuItem Header="Highlighting">
                     <MenuItem Header="Changes" Click="ChangesOnClick"/>

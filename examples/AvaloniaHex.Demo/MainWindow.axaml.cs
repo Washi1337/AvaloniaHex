@@ -487,5 +487,25 @@ namespace AvaloniaHex.Demo
             MainHexEditor.Caret.Location = new BitLocation(ulong.Parse(result, NumberStyles.HexNumber));
             MainHexEditor.ResetSelection();
         }
+
+        private void HeadersVisibleOnClick(object? sender, RoutedEventArgs e)
+        {
+            MainHexEditor.IsHeaderVisible = !MainHexEditor.IsHeaderVisible;
+        }
+
+        private void ToggleColumnHeader<TColumn>()
+            where TColumn : Column
+        {
+            var column = MainHexEditor.Columns.Get<TColumn>();
+            column.IsHeaderVisible = !column.IsHeaderVisible;
+        }
+
+        private void OffsetHeaderVisibleOnClick(object? sender, RoutedEventArgs e) => ToggleColumnHeader<OffsetColumn>();
+
+        private void HexHeaderVisibleOnClick(object? sender, RoutedEventArgs e) => ToggleColumnHeader<HexColumn>();
+
+        private void BinaryHeaderVisibleOnClick(object? sender, RoutedEventArgs e) => ToggleColumnHeader<BinaryColumn>();
+
+        private void AsciiHeaderVisibleOnClick(object? sender, RoutedEventArgs e) => ToggleColumnHeader<AsciiColumn>();
     }
 }

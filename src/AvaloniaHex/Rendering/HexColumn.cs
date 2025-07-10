@@ -12,7 +12,24 @@ public class HexColumn : CellBasedColumn
     static HexColumn()
     {
         IsUppercaseProperty.Changed.AddClassHandler<HexColumn, bool>(OnIsUpperCaseChanged);
+        UseDynamicHeaderProperty.Changed.AddClassHandler<BinaryColumn, bool>(OnUseDynamicHeaderChanged);
         CursorProperty.OverrideDefaultValue<HexColumn>(IBeamCursor);
+        HeaderProperty.OverrideDefaultValue<HexColumn>("Hex");
+    }
+
+    /// <summary>
+    /// Dependency property for <see cref="UseDynamicHeader"/>
+    /// </summary>
+    public static readonly StyledProperty<bool> UseDynamicHeaderProperty =
+        AvaloniaProperty.Register<HexColumn, bool>(nameof(UseDynamicHeader), true);
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the header of this column should be dynamically
+    /// </summary>
+    public bool UseDynamicHeader
+    {
+        get => GetValue(IsHeaderVisibleProperty);
+        set => SetValue(IsHeaderVisibleProperty, value);
     }
 
     /// <inheritdoc />
@@ -40,11 +57,6 @@ public class HexColumn : CellBasedColumn
     {
         get => GetValue(IsUppercaseProperty);
         set => SetValue(IsUppercaseProperty, value);
-    }
-
-    private static void OnIsUpperCaseChanged(HexColumn arg1, AvaloniaPropertyChangedEventArgs<bool> arg2)
-    {
-        arg1.HexView?.InvalidateVisualLines();
     }
 
     /// <inheritdoc />
@@ -84,6 +96,36 @@ public class HexColumn : CellBasedColumn
         GetText(data, range, output);
 
         return new string(output);
+    }
+
+    /// <inheritdoc />
+    public override TextLine? CreateHeaderLine()
+    {
+        if (!UseDynamicHeader)
+            return base.CreateHeaderLine();
+
+        if (HexView is null)
+            return null;
+
+        // Generate header text.
+        int count = HexView.ActualBytesPerLine;
+        char[] buffer = new char[count * 3 - 1];
+        for (int i = 0; i < count; i++)
+        {
+            buffer[i * 3] = GetHexDigit((byte) ((i >> 4) & 0xF), IsUppercase);
+            buffer[i * 3 + 1] = GetHexDigit((byte) (i & 0xF), IsUppercase);
+            if (i < count - 1)
+                buffer[i * 3 + 2] = ' ';
+        }
+
+        // Render.
+        var properties = GetHeaderTextRunProperties();
+        return TextFormatter.Current.FormatLine(
+            new SimpleTextSource(new string(buffer), properties),
+            0,
+            double.MaxValue,
+            new GenericTextParagraphProperties(properties)
+        );
     }
 
     /// <inheritdoc />
@@ -141,6 +183,20 @@ public class HexColumn : CellBasedColumn
 
             index += 2;
         }
+    }
+
+    private static void OnIsUpperCaseChanged(HexColumn arg1, AvaloniaPropertyChangedEventArgs<bool> arg2)
+    {
+        if (arg1.HexView is null)
+            return;
+
+        arg1.HexView.InvalidateVisualLines();
+        arg1.HexView.InvalidateHeaders();
+    }
+
+    private static void OnUseDynamicHeaderChanged(BinaryColumn arg1, AvaloniaPropertyChangedEventArgs<bool> arg2)
+    {
+        arg1.HexView?.InvalidateHeaders();
     }
 
     private sealed class HexTextSource : ITextSource

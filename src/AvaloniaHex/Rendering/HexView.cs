@@ -37,6 +37,7 @@ public class HexView : Control, ILogicalScrollable
         TemplatedControl.FontSizeProperty.Changed.AddClassHandler<HexView>(OnFontRelatedPropertyChanged);
         TemplatedControl.ForegroundProperty.Changed.AddClassHandler<HexView>(OnFontRelatedPropertyChanged);
         DocumentProperty.Changed.AddClassHandler<HexView>(OnDocumentChanged);
+        IsHeaderVisibleProperty.Changed.AddClassHandler<HexView>(OnIsHeaderVisibleChanged);
 
         AffectsArrange<HexView>(
             DocumentProperty,
@@ -59,7 +60,8 @@ public class HexView : Control, ILogicalScrollable
         {
             new ColumnBackgroundLayer(),
             new CellGroupsLayer(),
-            new TextLayer()
+            new HeaderLayer(),
+            new TextLayer(),
         };;
     }
 
@@ -109,7 +111,10 @@ public class HexView : Control, ILogicalScrollable
         private set
         {
             if (SetAndRaise(ActualBytesPerLineProperty, ref _actualBytesPerLine, value))
+            {
+                InvalidateHeaders();
                 InvalidateVisualLines();
+            }
         }
     }
 
@@ -140,6 +145,51 @@ public class HexView : Control, ILogicalScrollable
     {
         get => GetValue(ColumnPaddingProperty);
         set => SetValue(ColumnPaddingProperty, value);
+    }
+
+    /// <summary>
+    /// Dependency property for <see cref="HeaderPadding"/>.
+    /// </summary>
+    public static readonly StyledProperty<Thickness> HeaderPaddingProperty =
+        AvaloniaProperty.Register<HexView, Thickness>(nameof(HeaderPadding));
+
+    /// <summary>
+    /// Gets or sets the padding of the header.
+    /// </summary>
+    public Thickness HeaderPadding
+    {
+        get => GetValue(HeaderPaddingProperty);
+        set => SetValue(HeaderPaddingProperty, value);
+    }
+
+    /// <summary>
+    /// Dependency property for <see cref="IsHeaderVisible"/>.
+    /// </summary>
+    public static readonly StyledProperty<bool> IsHeaderVisibleProperty =
+        AvaloniaProperty.Register<HexView, bool>(nameof(IsHeaderVisible), true);
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the header (and padding) of the hex view should be rendered or not.
+    /// </summary>
+    public bool IsHeaderVisible
+    {
+        get => GetValue(IsHeaderVisibleProperty);
+        set => SetValue(IsHeaderVisibleProperty, value);
+    }
+
+    internal TextLine?[] Headers
+    {
+        get;
+        private set;
+    } = [];
+
+    /// <summary>
+    /// Gets the total effective header size of the hex view.
+    /// </summary>
+    public double EffectiveHeaderSize
+    {
+        get;
+        private set;
     }
 
     /// <summary>
@@ -318,6 +368,15 @@ public class HexView : Control, ILogicalScrollable
         InvalidateArrange();
     }
 
+    /// <summary>
+    /// Invalidates the headers of the hex view.
+    /// </summary>
+    public void InvalidateHeaders()
+    {
+        Array.Clear(Headers);
+        InvalidateArrange();
+    }
+
     /// <inheritdoc />
     protected override Size MeasureOverride(Size availableSize)
     {
@@ -420,8 +479,34 @@ public class HexView : Control, ILogicalScrollable
         }
     }
 
+    private void EnsureHeaders()
+    {
+        if (Headers.Length != Columns.Count)
+            Headers = new TextLine?[Columns.Count];
+
+        EffectiveHeaderSize = 0;
+
+        if (!IsHeaderVisible)
+            return;
+
+        for (int i = 0; i < Columns.Count; i++)
+        {
+            var column = Columns[i];
+            if (column is not { IsVisible: true, IsHeaderVisible: true })
+                continue;
+
+            var headerLine = Headers[i] ??= column.CreateHeaderLine();
+            if (headerLine is not null)
+                EffectiveHeaderSize = Math.Max(EffectiveHeaderSize, headerLine.Height);
+        }
+
+        EffectiveHeaderSize += HeaderPadding.Top + HeaderPadding.Bottom;
+    }
+
     private void UpdateVisualLines(Size finalSize)
     {
+        EnsureHeaders();
+
         // No columns or no document means we need a completely empty control.
         if (Columns.Count == 0 || Document is null)
         {
@@ -440,7 +525,7 @@ public class HexView : Control, ILogicalScrollable
             var line = _visualLines.GetOrCreateVisualLine(new BitRange(0, 1));
 
             line.EnsureIsValid();
-            line.Bounds = new Rect(0, 0, finalSize.Width, line.GetRequiredHeight());
+            line.Bounds = new Rect(0, EffectiveHeaderSize, finalSize.Width, line.GetRequiredHeight());
 
             VisibleRange = line.VirtualRange;
             FullyVisibleRange = VisibleRange;
@@ -455,7 +540,7 @@ public class HexView : Control, ILogicalScrollable
 
         var currentRange = new BitRange(startLocation, startLocation);
 
-        double currentY = 0;
+        double currentY = EffectiveHeaderSize;
         while (currentY < finalSize.Height && currentRange.End <= enclosingRange.End)
         {
             // Get/create next visual line.
@@ -646,6 +731,13 @@ public class HexView : Control, ILogicalScrollable
         ));
     }
 
+    private static void OnIsHeaderVisibleChanged(HexView arg1, AvaloniaPropertyChangedEventArgs arg2)
+    {
+        arg1.InvalidateHeaders();
+        arg1.InvalidateVisualLines();
+        arg1.InvalidateArrange();
+    }
+
     private void DocumentOnChanged(object? sender, BinaryDocumentChange e)
     {
         switch (e.Type)
@@ -678,6 +770,7 @@ public class HexView : Control, ILogicalScrollable
         arg1.EnsureTextProperties();
         arg1.InvalidateMeasure();
         arg1.InvalidateVisualLines();
+        arg1.InvalidateHeaders();
     }
 
     [MemberNotNull(nameof(TextRunProperties))]

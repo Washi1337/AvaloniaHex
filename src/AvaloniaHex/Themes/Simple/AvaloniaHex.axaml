@@ -7,6 +7,8 @@
         <ResourceDictionary>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="HeaderForeground" Color="Blue"/>
+                    <SolidColorBrush x:Key="HeaderBackground" Color="{DynamicResource ThemeBackgroundColor}" />
                     <SolidColorBrush x:Key="HexForegroundBase" Color="Black" />
                     <SolidColorBrush x:Key="OffsetForeground" Color="Blue"/>
 
@@ -21,9 +23,12 @@
                     <Pen x:Key="PrimaryCaretBorder" Brush="Black" />
                     <Pen x:Key="SecondaryCaretBorder" Brush="Black" />
                     <Pen x:Key="CurrentLineBorder" Brush="LightGray" Thickness="1"/>
+
                 </ResourceDictionary>
 
                 <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="HeaderForeground" Color="DarkCyan"/>
+                    <SolidColorBrush x:Key="HeaderBackground" Color="{DynamicResource ThemeBackgroundColor}" />
                     <SolidColorBrush x:Key="HexForegroundBase" Color="Gray" />
                     <SolidColorBrush x:Key="OffsetForeground" Color="DarkCyan"/>
 
@@ -52,8 +57,20 @@
         <Setter Property="ColumnPadding" Value="30"/>
     </Style>
 
+    <Style Selector="rendering|HexView">
+        <Setter Property="HeaderPadding" Value="0,3,0,5"/>
+    </Style>
+
     <Style Selector="rendering|OffsetColumn">
         <Setter Property="Foreground" Value="{DynamicResource OffsetForeground}"/>
+    </Style>
+
+    <Style Selector=":is(rendering|Column)">
+        <Setter Property="HeaderForeground" Value="{DynamicResource HeaderForeground}"/>
+    </Style>
+
+    <Style Selector="rendering|HeaderLayer">
+        <Setter Property="HeaderBackground" Value="{DynamicResource HeaderBackground}"/>
     </Style>
 
     <Style Selector="editing|CurrentLineLayer">

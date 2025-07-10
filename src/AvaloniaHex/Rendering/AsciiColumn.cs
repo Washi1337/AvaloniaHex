@@ -12,6 +12,8 @@ public class AsciiColumn : CellBasedColumn
     static AsciiColumn()
     {
         CursorProperty.OverrideDefaultValue<AsciiColumn>(IBeamCursor);
+        IsHeaderVisibleProperty.OverrideDefaultValue<AsciiColumn>(false);
+        HeaderProperty.OverrideDefaultValue<AsciiColumn>("ASCII");
     }
 
     /// <inheritdoc />

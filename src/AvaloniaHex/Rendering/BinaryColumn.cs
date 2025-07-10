@@ -12,6 +12,23 @@ public class BinaryColumn : CellBasedColumn
     static BinaryColumn()
     {
         CursorProperty.OverrideDefaultValue<BinaryColumn>(IBeamCursor);
+        UseDynamicHeaderProperty.Changed.AddClassHandler<BinaryColumn, bool>(OnUseDynamicHeaderChanged);
+        HeaderProperty.OverrideDefaultValue<BinaryColumn>("Binary");
+    }
+
+    /// <summary>
+    /// Dependency property for <see cref="UseDynamicHeader"/>
+    /// </summary>
+    public static readonly StyledProperty<bool> UseDynamicHeaderProperty =
+        AvaloniaProperty.Register<HexColumn, bool>(nameof(UseDynamicHeader), true);
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the header of this column should be dynamically
+    /// </summary>
+    public bool UseDynamicHeader
+    {
+        get => GetValue(IsHeaderVisibleProperty);
+        set => SetValue(IsHeaderVisibleProperty, value);
     }
 
     /// <inheritdoc />
@@ -66,6 +83,38 @@ public class BinaryColumn : CellBasedColumn
     }
 
     /// <inheritdoc />
+    public override TextLine? CreateHeaderLine()
+    {
+        if (!UseDynamicHeader)
+            return base.CreateHeaderLine();
+
+        if (HexView is null)
+            return null;
+
+        // Generate header text.
+        int count = HexView.ActualBytesPerLine;
+        char[] buffer = new char[count * 9 - 1];
+
+        for (int i = 0; i < count; i++)
+        {
+            for (int j = 0; j < 8; j++)
+                buffer[i * 9 + j] = (char) (((i >> (7 - j)) & 1) + '0');
+
+            if (i < count - 1)
+                buffer[i * 9 + 8] = ' ';
+        }
+
+        // Render.
+        var properties = GetHeaderTextRunProperties();
+        return TextFormatter.Current.FormatLine(
+            new SimpleTextSource(new string(buffer), properties),
+            0,
+            double.MaxValue,
+            new GenericTextParagraphProperties(properties)
+        );
+    }
+
+    /// <inheritdoc />
     public override TextLine? CreateTextLine(VisualBytesLine line)
     {
         if (HexView is null)
@@ -108,6 +157,11 @@ public class BinaryColumn : CellBasedColumn
 
             index += 8;
         }
+    }
+
+    private static void OnUseDynamicHeaderChanged(BinaryColumn arg1, AvaloniaPropertyChangedEventArgs<bool> arg2)
+    {
+        arg1.HexView?.InvalidateHeaders();
     }
 
     private sealed class BinaryTextSource : ITextSource

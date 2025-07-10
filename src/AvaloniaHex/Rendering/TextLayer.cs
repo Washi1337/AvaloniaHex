@@ -16,7 +16,7 @@ public class TextLayer : Layer
         if (HexView is null)
             return;
 
-        double currentY = 0;
+        double currentY = HexView.EffectiveHeaderSize;
         for (int i = 0; i < HexView.VisualLines.Count; i++)
         {
             var line = HexView.VisualLines[i];

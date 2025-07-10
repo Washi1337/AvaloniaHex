@@ -111,6 +111,25 @@ public class HexEditor : TemplatedControl
     }
 
     /// <summary>
+    /// Dependency property for <see cref="IsHeaderVisible"/>.
+    /// </summary>
+    public static readonly DirectProperty<HexEditor, bool> IsHeaderVisibleProperty =
+        AvaloniaProperty.RegisterDirect<HexEditor, bool>(
+            nameof(IsHeaderVisible),
+            editor => editor.IsHeaderVisible,
+            (editor, value) => editor.IsHeaderVisible = value
+        );
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the header (and padding) of the hex view should be rendered or not.
+    /// </summary>
+    public bool IsHeaderVisible
+    {
+        get => HexView.IsHeaderVisible;
+        set => HexView.IsHeaderVisible = value;
+    }
+
+    /// <summary>
     /// Dependency property for <see cref="Document"/>.
     /// </summary>
     public static readonly StyledProperty<IBinaryDocument?> DocumentProperty =

@@ -13,6 +13,8 @@ public class OffsetColumn : Column
     static OffsetColumn()
     {
         IsUppercaseProperty.Changed.AddClassHandler<HexColumn, bool>(OnIsUpperCaseChanged);
+        IsHeaderVisibleProperty.OverrideDefaultValue<OffsetColumn>(false);
+        HeaderProperty.OverrideDefaultValue<OffsetColumn>("Offset");
     }
 
     /// <inheritdoc />

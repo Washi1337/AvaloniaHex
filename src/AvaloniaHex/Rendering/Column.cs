@@ -12,6 +12,7 @@ public abstract class Column : Visual
 {
     internal static readonly Cursor IBeamCursor = new(StandardCursorType.Ibeam);
 
+    private GenericTextRunProperties? _headerRunProperties;
     private GenericTextRunProperties? _textRunProperties;
 
     static Column()
@@ -20,6 +21,7 @@ public abstract class Column : Visual
         BackgroundProperty.Changed.AddClassHandler<Column>(OnVisualPropertyChanged);
         BorderProperty.Changed.AddClassHandler<Column>(OnVisualPropertyChanged);
         IsVisibleProperty.Changed.AddClassHandler<Column>(OnVisibleChanged);
+        IsHeaderVisibleProperty.Changed.AddClassHandler<Column>(OnHeaderChanged);
     }
 
     /// <summary>
@@ -42,7 +44,7 @@ public abstract class Column : Visual
     public abstract Size MinimumSize { get; }
 
     /// <summary>
-    /// Dependency property for <see cref="Border"/>/
+    /// Dependency property for <see cref="Border"/>
     /// </summary>
     public static readonly StyledProperty<IPen?> BorderProperty =
         AvaloniaProperty.Register<Column, IPen?>(nameof(Border));
@@ -57,7 +59,7 @@ public abstract class Column : Visual
     }
 
     /// <summary>
-    /// Dependency property for <see cref="Background"/>/
+    /// Dependency property for <see cref="Background"/>
     /// </summary>
     public static readonly StyledProperty<IBrush?> BackgroundProperty =
         AvaloniaProperty.Register<Column, IBrush?>(nameof(Background));
@@ -72,7 +74,7 @@ public abstract class Column : Visual
     }
 
     /// <summary>
-    /// Dependency property for <see cref="Foreground"/>/
+    /// Dependency property for <see cref="Foreground"/>
     /// </summary>
     public static readonly StyledProperty<IBrush?> ForegroundProperty =
         AvaloniaProperty.Register<Column, IBrush?>(nameof(Foreground));
@@ -88,7 +90,7 @@ public abstract class Column : Visual
     }
 
     /// <summary>
-    /// Dependency property for <see cref="Cursor"/>/
+    /// Dependency property for <see cref="Cursor"/>
     /// </summary>
     public static readonly StyledProperty<Cursor?> CursorProperty =
         AvaloniaProperty.Register<Column, Cursor?>(nameof(Cursor));
@@ -106,6 +108,83 @@ public abstract class Column : Visual
     /// Gets the column width.
     /// </summary>
     public virtual double Width => MinimumSize.Width;
+
+    /// <summary>
+    /// Dependency property for <see cref="IsHeaderVisible"/>
+    /// </summary>
+    public static readonly StyledProperty<bool> IsHeaderVisibleProperty =
+        AvaloniaProperty.Register<Column, bool>(nameof(IsHeaderVisible), defaultValue: true);
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the header of this column is visible.
+    /// </summary>
+    public bool IsHeaderVisible
+    {
+        get => GetValue(IsHeaderVisibleProperty);
+        set => SetValue(IsHeaderVisibleProperty, value);
+    }
+
+    /// <summary>
+    /// Dependency property for <see cref="Header"/>/
+    /// </summary>
+    public static readonly StyledProperty<string?> HeaderProperty =
+        AvaloniaProperty.Register<Column, string?>(nameof(Header));
+
+    /// <summary>
+    /// Gets or sets the header text of this column.
+    /// </summary>
+    public string? Header
+    {
+        get => GetValue(HeaderProperty);
+        set => SetValue(HeaderProperty, value);
+    }
+
+    /// <summary>
+    /// Dependency property for <see cref="HeaderBackground"/>
+    /// </summary>
+    public static readonly StyledProperty<IBrush?> HeaderBackgroundProperty =
+        AvaloniaProperty.Register<Column, IBrush?>(nameof(HeaderBackground));
+
+    /// <summary>
+    /// Gets or sets the base background brush of the header of the column, or <c>null</c> if no background should be
+    /// drawn.
+    /// </summary>
+    public IBrush? HeaderBackground
+    {
+        get => GetValue(HeaderBackgroundProperty);
+        set => SetValue(HeaderBackgroundProperty, value);
+    }
+
+    /// <summary>
+    /// Dependency property for <see cref="HeaderForeground"/>
+    /// </summary>
+    public static readonly StyledProperty<IBrush?> HeaderForegroundProperty =
+        AvaloniaProperty.Register<Column, IBrush?>(nameof(HeaderForeground));
+
+    /// <summary>
+    /// Gets or sets the base foreground brush of the header of the column, or <c>null</c> if the default foreground
+    /// brush of the parent hex view should be used.
+    /// </summary>
+    public IBrush? HeaderForeground
+    {
+        get => GetValue(HeaderForegroundProperty);
+        set => SetValue(HeaderForegroundProperty, value);
+    }
+
+    /// <summary>
+    /// Dependency property for <see cref="HeaderBorder"/>
+    /// </summary>
+    public static readonly StyledProperty<IPen?> HeaderBorderProperty =
+        AvaloniaProperty.Register<HeaderLayer, IPen?>(nameof(HeaderBorder));
+
+    /// <summary>
+    /// Gets or sets the pen to use for drawing the border around the header of the column.
+    /// </summary>
+    public IPen? HeaderBorder
+    {
+        get => GetValue(HeaderBorderProperty);
+        set => SetValue(HeaderBorderProperty, value);
+    }
 
     internal void SetBounds(Rect bounds) => Bounds = bounds;
 
@@ -126,12 +205,46 @@ public abstract class Column : Visual
     }
 
     /// <summary>
+    /// Gets the text run properties to use for rendering text in this column.
+    /// </summary>
+    /// <returns>The properties.</returns>
+    /// <exception cref="InvalidOperationException">Occurs when the column is not added to a hex view.</exception>
+    protected GenericTextRunProperties GetHeaderTextRunProperties()
+    {
+        if (HexView is null)
+            throw new InvalidOperationException("Cannot query text run properties on a column that is not attached to a hex view.");
+
+        if (!HexView.TextRunProperties.Equals(_headerRunProperties))
+            _headerRunProperties = HexView.TextRunProperties.WithForeground(HeaderForeground ?? HexView.Foreground);
+
+        return _headerRunProperties;
+    }
+
+    /// <summary>
     /// Refreshes the measurements required to calculate the dimensions of the column.
     /// </summary>
     public abstract void Measure();
 
     /// <summary>
-    /// Constructs the text line of the provided hex view line for this column.
+    /// Constructs the text line of the header of the column.
+    /// </summary>
+    /// <returns></returns>
+    public virtual TextLine? CreateHeaderLine()
+    {
+        if (HexView is null || Header is not { } header)
+            return null;
+
+        var properties = GetHeaderTextRunProperties();
+        return TextFormatter.Current.FormatLine(
+            new SimpleTextSource(header, properties),
+            0,
+            double.MaxValue,
+            new GenericTextParagraphProperties(properties)
+        )!;
+    }
+
+    /// <summary>
+    /// Constructs the text line of the provided visual line for this column.
     /// </summary>
     /// <param name="line">The line to render.</param>
     /// <returns>The rendered text.</returns>
@@ -148,6 +261,16 @@ public abstract class Column : Visual
             return;
 
         arg1.HexView.InvalidateVisualLines();
+        foreach (var layer in arg1.HexView.Layers)
+            layer.InvalidateVisual();
+    }
+
+    private static void OnHeaderChanged(Column arg1, AvaloniaPropertyChangedEventArgs arg2)
+    {
+        if (arg1.HexView is null)
+            return;
+
+        arg1.HexView.InvalidateHeaders();
         foreach (var layer in arg1.HexView.Layers)
             layer.InvalidateVisual();
     }
