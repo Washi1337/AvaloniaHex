@@ -12,7 +12,7 @@ public class OffsetColumn : Column
 
     static OffsetColumn()
     {
-        IsUppercaseProperty.Changed.AddClassHandler<HexColumn, bool>(OnIsUpperCaseChanged);
+        IsUppercaseProperty.Changed.AddClassHandler<OffsetColumn, bool>(OnIsUpperCaseChanged);
         IsHeaderVisibleProperty.OverrideDefaultValue<OffsetColumn>(false);
         HeaderProperty.OverrideDefaultValue<OffsetColumn>("Offset");
     }
@@ -24,7 +24,7 @@ public class OffsetColumn : Column
     /// Defines the <see cref="IsUppercase"/> property.
     /// </summary>
     public static readonly StyledProperty<bool> IsUppercaseProperty =
-        AvaloniaProperty.Register<HexColumn, bool>(nameof(IsUppercase), true);
+        AvaloniaProperty.Register<OffsetColumn, bool>(nameof(IsUppercase), true);
 
     /// <summary>
     /// Gets or sets a value indicating whether the hexadecimal digits should be rendered in uppercase or not.
@@ -35,7 +35,7 @@ public class OffsetColumn : Column
         set => SetValue(IsUppercaseProperty, value);
     }
 
-    private static void OnIsUpperCaseChanged(HexColumn arg1, AvaloniaPropertyChangedEventArgs<bool> arg2)
+    private static void OnIsUpperCaseChanged(OffsetColumn arg1, AvaloniaPropertyChangedEventArgs<bool> arg2)
     {
         arg1.HexView?.InvalidateVisualLines();
     }
@@ -60,13 +60,17 @@ public class OffsetColumn : Column
         if (HexView is null)
             throw new InvalidOperationException();
 
-        ulong offset = line.Range.Start.ByteIndex;
-        string text = IsUppercase
-            ? $"{offset:X8}:"
-            : $"{offset:x8}:";
-
-        return CreateTextLine(text);
+        return CreateTextLine(FormatOffset(line.Range.Start.ByteIndex));
     }
+
+    /// <summary>
+    /// Formats the provided offset to a string to be displayed in the column.
+    /// </summary>
+    /// <param name="offset">The offset to format.</param>
+    /// <returns>The formatted offset.</returns>
+    protected virtual string FormatOffset(ulong offset) => IsUppercase
+        ? $"{offset:X8}:"
+        : $"{offset:x8}:";
 
     private TextLine? CreateTextLine(string text)
     {
