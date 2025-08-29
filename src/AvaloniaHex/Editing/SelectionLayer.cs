@@ -76,7 +76,7 @@ public class SelectionLayer : Layer
     }
 
     /// <summary>
-    /// Defines the <see cref="PrimarySelectionBorder"/> property.
+    /// Defines the <see cref="SecondarySelectionBorder"/> property.
     /// </summary>
     public static readonly StyledProperty<IPen?> SecondarySelectionBorderProperty =
         AvaloniaProperty.Register<SelectionLayer, IPen?>(
@@ -94,7 +94,7 @@ public class SelectionLayer : Layer
     }
 
     /// <summary>
-    /// Defines the <see cref="PrimarySelectionBorder"/> property.
+    /// Defines the <see cref="SecondarySelectionBackground"/> property.
     /// </summary>
     public static readonly StyledProperty<IBrush?> SecondarySelectionBackgroundProperty =
         AvaloniaProperty.Register<SelectionLayer, IBrush?>(
