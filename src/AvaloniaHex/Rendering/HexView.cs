@@ -642,13 +642,14 @@ public class HexView : Control, ILogicalScrollable
     /// Gets the location of the cell under the provided point.
     /// </summary>
     /// <param name="point">The point.</param>
+    /// <param name="restrictToVisibleRange"><c>true</c> if the locations should be restricted to the valid, visible ranges only, <c>false</c> otherwise.</param>
     /// <returns>The location of the cell, or <c>null</c> if no cell is under the provided point.</returns>
-    public BitLocation? GetLocationByPoint(Point point)
+    public BitLocation? GetLocationByPoint(Point point, bool restrictToVisibleRange = true)
     {
         if (GetColumnByPoint(point) is not CellBasedColumn column)
             return null;
 
-        return GetLocationByPoint(point, column);
+        return GetLocationByPoint(point, column, restrictToVisibleRange);
     }
 
     /// <summary>
@@ -656,13 +657,56 @@ public class HexView : Control, ILogicalScrollable
     /// </summary>
     /// <param name="point">The point.</param>
     /// <param name="column">The column</param>
+    /// /// <param name="restrictToVisibleRange"><c>true</c> if the locations should be restricted to the valid, visible ranges only, <c>false</c> otherwise.</param>
     /// <returns>The location of the cell, or <c>null</c> if no cell is under the provided point.</returns>
-    public BitLocation? GetLocationByPoint(Point point, CellBasedColumn column)
+    public BitLocation? GetLocationByPoint(Point point, CellBasedColumn column, bool restrictToVisibleRange = true)
     {
-        if (GetVisualLineByPoint(point) is not { } line)
+        if (restrictToVisibleRange)
+            return GetVisualLineByPoint(point) is { } line ? column.GetLocationByPoint(line, point) : null;
+
+        var range = GetLineRangeByYCoord(point.Y);
+        if (range is null)
             return null;
 
-        return column.GetLocationByPoint(line, point);
+        return column.GetLocationByPoint(range.Value, point);
+    }
+
+    private BitRange? GetLineRangeByYCoord(double yCoord)
+    {
+        if (VisualLines.Count == 0 || Document is not { } document)
+            return null;
+
+        if (IsHeaderVisible)
+            yCoord -= EffectiveHeaderSize;
+
+        ulong bytesPerLine = (ulong) ActualBytesPerLine;
+        double lineHeight = VisualLines[0].GetRequiredHeight();
+        int lineDelta = (int) (yCoord / lineHeight);
+
+        var enclosingRange = document.ValidRanges.EnclosingRange;
+        var visibleRangeStart = VisibleRange.Start;
+
+        BitLocation start;
+        if (lineDelta < 0)
+        {
+            lineDelta = -lineDelta;
+
+            // Clamp to beginning of document.
+            int linesAvailable = (int) ((visibleRangeStart.ByteIndex - enclosingRange.Start.ByteIndex) / bytesPerLine);
+            start = linesAvailable >= lineDelta
+                ? visibleRangeStart.SubtractBytes((ulong) lineDelta * bytesPerLine)
+                : enclosingRange.Start;
+        }
+        else
+        {
+            // Clamp to ending of document.
+            int linesAvailable = (int) ((enclosingRange.End.ByteIndex - visibleRangeStart.ByteIndex) / bytesPerLine);
+            start = linesAvailable >= lineDelta
+                ? visibleRangeStart.AddBytes((ulong) lineDelta * bytesPerLine)
+                : new BitLocation(enclosingRange.End.ByteIndex / bytesPerLine * bytesPerLine);
+        }
+
+        return new BitRange(start, start.AddBytes(bytesPerLine));
     }
 
     /// <summary>
