@@ -260,7 +260,7 @@ public class HexEditor : TemplatedControl
             && Caret.PrimaryColumn is { } column)
         {
             var position = e.GetPosition(HexView);
-            if (HexView.GetLocationByPoint(position, column) is { } location)
+            if (HexView.GetLocationByPoint(position, column, false) is { } location)
             {
                 Selection.Range = new BitRange(
                     location.Min(anchorPoint).AlignDown(),

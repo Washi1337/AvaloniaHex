@@ -358,6 +358,17 @@ public abstract class CellBasedColumn : Column
     /// <returns>The cell's location.</returns>
     public BitLocation? GetLocationByPoint(VisualBytesLine line, Point point)
     {
+        return GetLocationByPoint(line.Range, point);
+    }
+
+    /// <summary>
+    /// Gets the bit location of the cell under the provided point.
+    /// </summary>
+    /// <param name="lineRange">The range of the line.</param>
+    /// <param name="point">The point.</param>
+    /// <returns>The cell's location.</returns>
+    public BitLocation? GetLocationByPoint(BitRange lineRange, Point point)
+    {
         var relativePoint = point - Bounds.TopLeft;
         double totalGroupWidth = WordWidth + GroupPadding;
 
@@ -369,10 +380,10 @@ public abstract class CellBasedColumn : Column
         );
 
         var location = new BitLocation(
-            line.VirtualRange.Start.ByteIndex + byteIndex,
+            lineRange.Start.ByteIndex + byteIndex,
             (CellsPerWord - 1 - nibbleIndex) * BitsPerCell
         );
 
-        return location.Clamp(line.VirtualRange);
+        return location.Clamp(lineRange);
     }
 }
