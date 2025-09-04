@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
@@ -676,16 +677,23 @@ public class HexView : Control, ILogicalScrollable
         if (VisualLines.Count == 0 || Document is not { } document)
             return null;
 
+        ulong bytesPerLine = (ulong) ActualBytesPerLine;
+        double lineHeight = VisualLines[0].GetRequiredHeight();
+
+        // Apply correction for when header is visible.
         if (IsHeaderVisible)
             yCoord -= EffectiveHeaderSize;
 
-        ulong bytesPerLine = (ulong) ActualBytesPerLine;
-        double lineHeight = VisualLines[0].GetRequiredHeight();
-        int lineDelta = (int) (yCoord / lineHeight);
+        // Address off-by-one line correction for when cursor is just above the control.
+        // (Otherwise, the division below gets rounded the wrong way around).
+        if (yCoord < 0)
+            yCoord -= lineHeight;
 
+        int lineDelta = (int) (yCoord / lineHeight);
         var enclosingRange = document.ValidRanges.EnclosingRange;
         var visibleRangeStart = VisibleRange.Start;
 
+        // Determine start of line.
         BitLocation start;
         if (lineDelta < 0)
         {
@@ -706,6 +714,7 @@ public class HexView : Control, ILogicalScrollable
                 : new BitLocation(enclosingRange.End.ByteIndex / bytesPerLine * bytesPerLine);
         }
 
+        // Span entire line.
         return new BitRange(start, start.AddBytes(bytesPerLine));
     }
 
