@@ -5,6 +5,9 @@
     <Application.Styles>
         <SimpleTheme />
         <StyleInclude Source="avares://AvaloniaHex/Themes/Simple/AvaloniaHex.axaml"/>
+        
+        <!-- <FluentTheme /> -->
+        <!-- <StyleInclude Source="avares://AvaloniaHex/Themes/Fluent/AvaloniaHex.axaml"/> -->
     </Application.Styles>
     <Application.Resources>
         <FontFamily x:Key="SourceCodeProFont">avares://AvaloniaHex.Demo/Resources#Source Code Pro</FontFamily>

@@ -111,7 +111,6 @@
             x:Name="MainHexEditor"
             BorderBrush="{DynamicResource MainBorderBrush}"
             BorderThickness="1"
-            FontSize="14"
             FontFamily="{StaticResource SourceCodeProFont}">
             <avaloniaHex:HexEditor.Columns>
                 <rendering:OffsetColumn />

@@ -1,6 +1,54 @@
-<ResourceDictionary xmlns="https://github.com/avaloniaui"
-                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <ResourceDictionary.MergedDictionaries>
-        <ResourceInclude Source="/HexEditor.axaml" />
-    </ResourceDictionary.MergedDictionaries>
-</ResourceDictionary>
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:rendering="clr-namespace:AvaloniaHex.Rendering"
+        xmlns:avaloniaHex="clr-namespace:AvaloniaHex"
+        xmlns:editing="clr-namespace:AvaloniaHex.Editing">
+
+    <Styles.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="/HexEditor.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Styles.Resources>
+    
+    <Style Selector="avaloniaHex|HexEditor">
+        <Setter Property="Foreground" Value="{DynamicResource HexForegroundBase}"/>
+        <Setter Property="ColumnPadding" Value="30"/>
+    </Style>
+
+    <Style Selector="rendering|HexView">
+        <Setter Property="HeaderPadding" Value="0,3,0,5"/>
+    </Style>
+
+    <Style Selector="rendering|OffsetColumn">
+        <Setter Property="Foreground" Value="{DynamicResource OffsetForeground}"/>
+    </Style>
+
+    <Style Selector=":is(rendering|Column)">
+        <Setter Property="HeaderForeground" Value="{DynamicResource HeaderForeground}"/>
+    </Style>
+
+    <Style Selector="rendering|HeaderLayer">
+        <Setter Property="HeaderBackground" Value="{DynamicResource HeaderBackground}"/>
+    </Style>
+
+    <Style Selector="editing|CurrentLineLayer">
+        <Setter Property="CurrentLineBackground" Value="{DynamicResource CurrentLineBackground}"/>
+        <Setter Property="CurrentLineBorder" Value="{DynamicResource CurrentLineBorder}"/>
+    </Style>
+
+    <Style Selector="editing|CaretLayer">
+        <Setter Property="PrimaryColumnBackground" Value="{DynamicResource PrimaryCaretBackground}"/>
+        <Setter Property="PrimaryColumnBorder" Value="{DynamicResource PrimaryCaretBorder}"/>
+        <Setter Property="SecondaryColumnBackground" Value="{DynamicResource SecondaryCaretBackground}"/>
+        <Setter Property="SecondaryColumnBorder" Value="{DynamicResource SecondaryCaretBorder}"/>
+    </Style>
+
+    <Style Selector="editing|SelectionLayer">
+        <Setter Property="PrimarySelectionBackground" Value="{DynamicResource PrimarySelectionBackground}"/>
+        <Setter Property="PrimarySelectionBorder" Value="{DynamicResource PrimarySelectionBorder}"/>
+        <Setter Property="SecondarySelectionBackground" Value="{DynamicResource SecondarySelectionBackground}"/>
+        <Setter Property="SecondarySelectionBorder" Value="{DynamicResource SecondarySelectionBorder}"/>
+    </Style>
+</Styles>

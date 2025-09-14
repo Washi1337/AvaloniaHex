@@ -6,18 +6,18 @@
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="HeaderForeground" Color="Blue"/>
-                    <SolidColorBrush x:Key="HeaderBackground" Color="{DynamicResource ThemeBackgroundColor}" />
+                    <SolidColorBrush x:Key="HeaderBackground" Color="{DynamicResource SystemRegionColor}" />
                     <SolidColorBrush x:Key="HexForegroundBase" Color="Black" />
                     <SolidColorBrush x:Key="OffsetForeground" Color="Blue"/>
 
-                    <SolidColorBrush x:Key="PrimarySelectionBackground" Color="{DynamicResource HighlightColor}" Opacity="0.4" />
-                    <SolidColorBrush x:Key="SecondarySelectionBackground" Color="{DynamicResource HighlightColor}" Opacity="0.2" />
+                    <SolidColorBrush x:Key="PrimarySelectionBackground" Color="{DynamicResource SystemAccentColor}" Opacity="0.4" />
+                    <SolidColorBrush x:Key="SecondarySelectionBackground" Color="{DynamicResource SystemAccentColor}" Opacity="0.2" />
                     <SolidColorBrush x:Key="PrimaryCaretBackground" Color="Black" Opacity="0.3" />
                     <SolidColorBrush x:Key="SecondaryCaretBackground" Color="Black" Opacity="0.3" />
                     <SolidColorBrush x:Key="CurrentLineBackground" Color="Gray" Opacity="0.1"/>
 
-                    <Pen x:Key="PrimarySelectionBorder" Brush="{DynamicResource HighlightColor}" />
-                    <Pen x:Key="SecondarySelectionBorder" Brush="{DynamicResource HighlightColor}" />
+                    <Pen x:Key="PrimarySelectionBorder" Brush="{DynamicResource SystemAccentColor}" />
+                    <Pen x:Key="SecondarySelectionBorder" Brush="{DynamicResource SystemAccentColor}" />
                     <Pen x:Key="PrimaryCaretBorder" Brush="Black" />
                     <Pen x:Key="SecondaryCaretBorder" Brush="Black" />
                     <Pen x:Key="CurrentLineBorder" Brush="LightGray" Thickness="1"/>
@@ -25,18 +25,18 @@
 
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="HeaderForeground" Color="DarkCyan"/>
-                    <SolidColorBrush x:Key="HeaderBackground" Color="{DynamicResource ThemeBackgroundColor}" />
+                    <SolidColorBrush x:Key="HeaderBackground" Color="{DynamicResource SystemRegionColor}" />
                     <SolidColorBrush x:Key="HexForegroundBase" Color="Gray" />
                     <SolidColorBrush x:Key="OffsetForeground" Color="DarkCyan"/>
 
-                    <SolidColorBrush x:Key="PrimarySelectionBackground" Color="{DynamicResource HighlightColor}" Opacity="0.4" />
-                    <SolidColorBrush x:Key="SecondarySelectionBackground" Color="{DynamicResource HighlightColor}" Opacity="0.2" />
+                    <SolidColorBrush x:Key="PrimarySelectionBackground" Color="{DynamicResource SystemAccentColor}" Opacity="0.5" />
+                    <SolidColorBrush x:Key="SecondarySelectionBackground" Color="{DynamicResource SystemAccentColor}" Opacity="0.3" />
                     <SolidColorBrush x:Key="PrimaryCaretBackground" Color="Magenta" Opacity="0.3" />
                     <SolidColorBrush x:Key="SecondaryCaretBackground" Color="DarkMagenta" Opacity="0.5" />
                     <SolidColorBrush x:Key="CurrentLineBackground" Color="Gray" Opacity="0.1"/>
 
-                    <Pen x:Key="PrimarySelectionBorder" Brush="{DynamicResource HighlightColor}" />
-                    <Pen x:Key="SecondarySelectionBorder" Brush="{DynamicResource HighlightColor}" />
+                    <Pen x:Key="PrimarySelectionBorder" Brush="{DynamicResource SystemAccentColor}" />
+                    <Pen x:Key="SecondarySelectionBorder" Brush="{DynamicResource SystemAccentColor}" />
                     <Pen x:Key="PrimaryCaretBorder" Brush="Magenta" />
                     <Pen x:Key="SecondaryCaretBorder" Brush="DarkMagenta" />
                     <Pen x:Key="CurrentLineBorder" Brush="DimGray" Thickness="1"/>
