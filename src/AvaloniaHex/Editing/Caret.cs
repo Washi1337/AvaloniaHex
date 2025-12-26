@@ -115,9 +115,17 @@ public sealed class Caret
     }
 
     /// <summary>
-    /// Gets the primary column the caret is active in..
+    /// Gets the primary column the caret is active in.
     /// </summary>
-    public CellBasedColumn? PrimaryColumn => HexView.Columns[PrimaryColumnIndex] as CellBasedColumn;
+    public CellBasedColumn? PrimaryColumn
+    {
+        get
+        {
+            return (uint)PrimaryColumnIndex < HexView.Columns.Count
+                ? HexView.Columns[PrimaryColumnIndex] as CellBasedColumn
+                : null;
+        }
+    }
 
     private void OnLocationChanged()
     {
