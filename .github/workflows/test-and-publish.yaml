@@ -1,0 +1,182 @@
+name: Test and Publish
+
+on:
+  push:
+    branches:
+      - master
+      - development
+      - 'cicd/**'
+  pull_request:
+    branches:
+      - master
+      - development
+      - 'cicd/**'
+
+concurrency:
+  group: ${{github.workflow}}-${{github.event.pull_request.number || github.ref}}
+  cancel-in-progress: true
+
+env:
+  # Disable the .NET logo in the console output.
+  DOTNET_NOLOGO: true
+  # Disable the .NET first time experience to skip caching NuGet packages and speed up the build.
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  # Disable sending .NET CLI telemetry to Microsoft.
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  upload-event-file:
+    name: Upload Event File
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Upload event file
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-event-file
+          path: ${{ github.event_path }}
+          retention-days: 1
+
+  # Construct a version suffix including the branch name, build number and commit hash (e.g., "development.58+abcdef12").
+  get-version:
+    name: Calculating Version Suffix
+    runs-on: ubuntu-24.04
+    outputs:
+      version_suffix: ${{ steps.set-vars.outputs.version_suffix }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - id: git-vars
+        name: Get git branch information
+        shell: bash
+        run: |
+          echo "##[set-output name=git_branch;]$(echo $GITHUB_REF)"
+          echo "::set-output name=git_hash::$(git rev-parse --short HEAD)"
+
+      - id: set-vars
+        uses: actions/github-script@v8
+        with:
+          script: |
+            let runNumber = "${{ github.run_number }}";
+            let gitHash = "${{ steps.git-vars.outputs.git_hash }}";
+            let rawGitRef = "${{ steps.git-vars.outputs.git_branch }}";
+            console.log("rawGitRef: " + rawGitRef);
+            let gitRef = rawGitRef.replace(/^refs\/heads\//, "").replace(/^refs\/heads\//, "").replace(/[_//!@#$%&]/g, "-");
+            if(gitRef.indexOf("refs/pull/") === 0) {
+              gitRef = "pr-" + gitRef.substring(10, gitRef.lastIndexOf("/"));
+            }
+            var versSuffix = `${gitRef}.${runNumber}+${gitHash}`;
+            console.log(versSuffix);
+            core.setOutput("version_suffix", versSuffix);
+
+  # Main build job for compiling all csprojs.
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    needs: [get-version]
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      # Master branch is just a normal build.
+      - name: Build on master branch
+        shell: pwsh
+        if: ${{github.ref == 'refs/heads/master'}}
+        run: |
+          dotnet restore AvaloniaHex.slnx
+          dotnet build AvaloniaHex.slnx `
+            --configuration Release
+
+      # For non-master branches (e.g., development or feature branches) we apply a fixup on the version suffix.
+      - name: Build on non-master branch
+        shell: pwsh
+        if: ${{github.ref != 'refs/heads/master'}}
+        run: |
+          dotnet restore AvaloniaHex.slnx `
+            --property:VersionSuffix=${{needs.get-version.outputs.version_suffix}}
+
+          dotnet build AvaloniaHex.slnx `
+            --configuration Release `
+            --property:VersionSuffix=${{needs.get-version.outputs.version_suffix}}
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v5
+        with:
+          name: build-artifacts
+          path: artifacts/
+          retention-days: 7
+
+  # Multiplexed test job running all tests on different architectures.
+  test:
+    name: Test
+    needs: [get-version, build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v6
+        with:
+          name: build-artifacts
+          path: artifacts/
+
+      - name: Run Tests
+        shell: pwsh
+        run: |
+          & dotnet test AvaloniaHex.slnx `
+            --configuration Release `
+            --property:VersionSuffix=${{needs.get-version.outputs.version_suffix}} `
+            --logger "trx" `
+            --logger "console;verbosity=minimal"
+
+      # Collect all trx files and upload them.
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: test-results-${{matrix.runner.image}}-${{matrix.runner.arch}}
+          path: '**/*.trx'
+          if-no-files-found: 'warn'
+          retention-days: 1
+
+
+  # Job to publish to nuget feeds.
+  publish:
+    name: Publish NuGet Packages
+    runs-on: ubuntu-24.04
+    needs: [test]
+    if: ${{github.ref == 'refs/heads/master'}}
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Download Build Artifacts
+      uses: actions/download-artifact@v6
+      with:
+        name: build-artifacts
+        path: artifacts/
+
+    - name: Push to NuGet
+      if: ${{github.ref == 'refs/heads/master'}}
+      shell: pwsh
+      env:
+        NUGET_API_KEY: ${{secrets.NUGET_API_KEY}}
+      run: dotnet nuget push "./artifacts/**/*.nupkg" -k "$env:NUGET_API_KEY" -s https://api.nuget.org/v3/index.json --skip-duplicate

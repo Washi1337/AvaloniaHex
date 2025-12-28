@@ -5,10 +5,13 @@
         <PackageProjectUrl>https://github.com/Washi1337/AvaloniaHex</PackageProjectUrl>
         <PackageLicense>https://github.com/Washi1337/AvaloniaHex/LICENSE.md</PackageLicense>
         <RepositoryUrl>https://github.com/Washi1337/AvaloniaHex</RepositoryUrl>
+        <TargetFramework>net10.0</TargetFramework>
         <RepositoryType>git</RepositoryType>
-        <LangVersion>12</LangVersion>
-        <Version>0.1.10</Version>
+        <LangVersion>13</LangVersion>
+        <Version>0.1.11</Version>
         <Deterministic>true</Deterministic>
+        <Nullable>enable</Nullable>
+        <UseArtifactsOutput>true</UseArtifactsOutput>
     </PropertyGroup>
 
 </Project>
