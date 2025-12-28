@@ -3,12 +3,12 @@ name: Test and Publish
 on:
   push:
     branches:
-      - master
+      - main
       - development
       - 'cicd/**'
   pull_request:
     branches:
-      - master
+      - main
       - development
       - 'cicd/**'
 
@@ -84,19 +84,19 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      # Master branch is just a normal build.
-      - name: Build on master branch
+      # Main branch is just a normal build.
+      - name: Build on main branch
         shell: pwsh
-        if: ${{github.ref == 'refs/heads/master'}}
+        if: ${{github.ref == 'refs/heads/main'}}
         run: |
           dotnet restore AvaloniaHex.slnx
           dotnet build AvaloniaHex.slnx `
             --configuration Release
 
-      # For non-master branches (e.g., development or feature branches) we apply a fixup on the version suffix.
-      - name: Build on non-master branch
+      # For non-main branches (e.g., development or feature branches) we apply a fixup on the version suffix.
+      - name: Build on non-main branch
         shell: pwsh
-        if: ${{github.ref != 'refs/heads/master'}}
+        if: ${{github.ref != 'refs/heads/main'}}
         run: |
           dotnet restore AvaloniaHex.slnx `
             --property:VersionSuffix=${{needs.get-version.outputs.version_suffix}}
@@ -158,7 +158,7 @@ jobs:
     name: Publish NuGet Packages
     runs-on: ubuntu-24.04
     needs: [test]
-    if: ${{github.ref == 'refs/heads/master'}}
+    if: ${{github.ref == 'refs/heads/main'}}
 
     steps:
     - uses: actions/checkout@v6
@@ -175,7 +175,7 @@ jobs:
         path: artifacts/
 
     - name: Push to NuGet
-      if: ${{github.ref == 'refs/heads/master'}}
+      if: ${{github.ref == 'refs/heads/main'}}
       shell: pwsh
       env:
         NUGET_API_KEY: ${{secrets.NUGET_API_KEY}}
