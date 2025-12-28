@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/examples/">
+    <Project Path="examples/AvaloniaHex.Demo/AvaloniaHex.Demo.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="LICENSE.md" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/AvaloniaHex/AvaloniaHex.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/AvaloniaHex.Tests/AvaloniaHex.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -2,6 +2,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using AvaloniaHex.Document;
@@ -454,7 +455,7 @@ public class HexEditor : TemplatedControl
         if (Caret.PrimaryColumn is not {} column || TopLevel.GetTopLevel(this)?.Clipboard is not { } clipboard)
             return;
 
-        string? text = await clipboard.GetTextAsync();
+        string? text = await clipboard.TryGetTextAsync();
         if (string.IsNullOrEmpty(text))
             return;
 
