@@ -288,7 +288,7 @@ public class HexView : Control, ILogicalScrollable
         set => ScrollOffset = value;
     }
 
-    Size IScrollable.Viewport => new(0, 1);
+    Size IScrollable.Viewport => PageScrollSize;
 
     bool ILogicalScrollable.CanHorizontallyScroll { get; set; } = false;
 
