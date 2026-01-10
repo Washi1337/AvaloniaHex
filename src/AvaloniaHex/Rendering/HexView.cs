@@ -17,6 +17,9 @@ namespace AvaloniaHex.Rendering;
 /// </summary>
 public class HexView : Control, ILogicalScrollable
 {
+    // Virtual empty space at the end of the document (in number of lines).
+    private const int VirtualSpace = 1;
+    
     /// <inheritdoc />
     public event EventHandler? ScrollInvalidated;
 
@@ -27,7 +30,7 @@ public class HexView : Control, ILogicalScrollable
 
     private readonly VisualBytesLinesBuffer _visualLines;
     private Vector _scrollOffset;
-    private Size _extent;
+    private ulong? _anchorByteIndex;
     private int _actualBytesPerLine;
 
     static HexView()
@@ -63,7 +66,7 @@ public class HexView : Control, ILogicalScrollable
             new CellGroupsLayer(),
             new HeaderLayer(),
             new TextLayer(),
-        };;
+        };
     }
 
     /// <summary>
@@ -256,15 +259,8 @@ public class HexView : Control, ILogicalScrollable
     /// <inheritdoc />
     public Size Extent
     {
-        get => _extent;
-        private set
-        {
-            if (_extent != value)
-            {
-                _extent = value;
-                ((ILogicalScrollable) this).RaiseScrollInvalidated(EventArgs.Empty);
-            }
-        }
+        get; 
+        private set;
     }
 
     /// <summary>
@@ -275,7 +271,11 @@ public class HexView : Control, ILogicalScrollable
         get => _scrollOffset;
         set
         {
+            if (_scrollOffset == value)
+                return;
+
             _scrollOffset = value;
+            _anchorByteIndex = null;
             InvalidateArrange();
             ((ILogicalScrollable) this).RaiseScrollInvalidated(EventArgs.Empty);
         }
@@ -288,7 +288,12 @@ public class HexView : Control, ILogicalScrollable
         set => ScrollOffset = value;
     }
 
-    Size IScrollable.Viewport => new(0, 1);
+    /// <inheritdoc />
+    public Size Viewport
+    {
+        get; 
+        private set;
+    }
 
     bool ILogicalScrollable.CanHorizontallyScroll { get; set; } = false;
 
@@ -393,18 +398,11 @@ public class HexView : Control, ILogicalScrollable
     /// <inheritdoc />
     protected override Size ArrangeOverride(Size finalSize)
     {
+        SetScrollAnchor();
         ComputeBytesPerLine(finalSize);
         UpdateColumnBounds();
         UpdateVisualLines(finalSize);
-
-        if (Document is {} document)
-        {
-            Extent = new Size(0, Math.Ceiling((double) document.Length / ActualBytesPerLine));
-        }
-        else
-        {
-            Extent = default;
-        }
+        UpdateScrollInfo(finalSize);
 
         bool hasResized = finalSize != Bounds.Size;
 
@@ -417,6 +415,18 @@ public class HexView : Control, ILogicalScrollable
         }
 
         return base.ArrangeOverride(finalSize);
+    }
+
+    private void SetScrollAnchor()
+    {
+        // When resizing the hex view, keep the top-left byte ("anchor") on the first visible line.
+        if (!_anchorByteIndex.HasValue && Document?.ValidRanges.EnclosingRange is { } enclosingRange)
+        {
+            // Remember the index of the top-left byte based on the current scroll offset.
+            // (The anchor byte index is reset when the user changes scroll offset.)
+            ulong lineIndex = (ulong) Math.Round(ScrollOffset.Y, MidpointRounding.AwayFromZero);
+            _anchorByteIndex = enclosingRange.Start.ByteIndex + lineIndex * (ulong) ActualBytesPerLine;
+        }
     }
 
     private void ComputeBytesPerLine(Size finalSize)
@@ -512,6 +522,7 @@ public class HexView : Control, ILogicalScrollable
         if (Columns.Count == 0 || Document is null)
         {
             _visualLines.Clear();
+            _anchorByteIndex = null;
 
             VisibleRange = default;
             FullyVisibleRange = default;
@@ -522,6 +533,7 @@ public class HexView : Control, ILogicalScrollable
         if (Document.Length == 0)
         {
             _visualLines.Clear();
+            _anchorByteIndex = null;
 
             var line = _visualLines.GetOrCreateVisualLine(new BitRange(0, 1));
 
@@ -533,12 +545,17 @@ public class HexView : Control, ILogicalScrollable
             return;
         }
 
+        Debug.Assert(_anchorByteIndex.HasValue, "Scroll anchor expected to be set.");
+
         // Otherwise, ensure all visible lines are created.
         var enclosingRange = Document.ValidRanges.EnclosingRange;
-        var startLocation = new BitLocation(
-            enclosingRange.Start.ByteIndex + (ulong) ScrollOffset.Y * (ulong) ActualBytesPerLine
+        _anchorByteIndex = ulong.Clamp(
+            _anchorByteIndex.Value,
+            enclosingRange.Start.ByteIndex,
+            enclosingRange.End.ByteIndex
         );
-
+        ulong lineIndex = (_anchorByteIndex.Value - enclosingRange.Start.ByteIndex) / (ulong) ActualBytesPerLine;
+        var startLocation = new BitLocation(enclosingRange.Start.ByteIndex + lineIndex * (ulong) ActualBytesPerLine);
         var currentRange = new BitRange(startLocation, startLocation);
 
         double currentY = EffectiveHeaderSize;
@@ -573,10 +590,91 @@ public class HexView : Control, ILogicalScrollable
         }
         else
         {
-            FullyVisibleRange = new BitRange(
-                VisibleRange.Start,
-                new BitLocation(VisibleRange.End.ByteIndex - (ulong) ActualBytesPerLine, 0)
-            );
+            var start = VisibleRange.Start;
+            var end = new BitLocation(VisibleRange.End.ByteIndex - (ulong) ActualBytesPerLine);
+            if (end < start)
+            {
+                // Viewport too small, no fully visible lines.
+                // Treat last line as fully visible, which is needed for BringIntoView().
+                FullyVisibleRange = VisibleRange;
+            }
+            else
+            {
+                FullyVisibleRange = new BitRange(start, end);
+            }
+        }
+    }
+
+    private void UpdateScrollInfo(Size finalSize)
+    {
+        Size newExtent;
+        Size newViewport;
+        Vector newScrollOffset;
+
+        if (Document is { } document)
+        {
+            newExtent = new Size(0, Math.Ceiling((double)document.Length / ActualBytesPerLine) + VirtualSpace);
+
+            if (VisualLines.Count > 0)
+            {
+                double height = finalSize.Height - EffectiveHeaderSize;
+                var line = VisualLines[0];
+                double lineHeight = line.GetRequiredHeight();
+                newViewport = new Size(0, lineHeight > 0 ? height / lineHeight : 1);
+            }
+            else
+            {
+                newViewport = new Size(0, 1);
+            }
+
+            if (_anchorByteIndex.HasValue)
+            {
+                var enclosingRange = document.ValidRanges.EnclosingRange;
+                ulong lineIndex = (_anchorByteIndex.Value - enclosingRange.Start.ByteIndex) / (ulong) ActualBytesPerLine;
+
+                // The scroll offset can be a fractional value. Update the scroll offset only when
+                // it is necessary to scroll to a different line.
+                newScrollOffset = lineIndex != (ulong) Math.Round(_scrollOffset.Y, MidpointRounding.AwayFromZero)
+                    ? new Vector(0, lineIndex)
+                    : _scrollOffset;
+            }
+            else
+            {
+                newScrollOffset = default;
+            }
+        }
+        else
+        {
+            newExtent = default;
+            newViewport = new Size(0, 1);
+            newScrollOffset = default;
+        }
+
+        if (newExtent == Extent && newViewport == Viewport && newScrollOffset == ScrollOffset)
+            return;
+
+        // When the extent grows or shrinks, the previous scroll offset may fall outside the new
+        // extent. The properties must be updated in the correct order to prevent the ScrollViewer's
+        // coercion logic from overriding the scroll offset.
+        if (newExtent.Height > Extent.Height)
+        {
+            // Grow extent.
+            Extent = newExtent;
+            Viewport = newViewport;
+            ((ILogicalScrollable) this).RaiseScrollInvalidated(EventArgs.Empty);
+
+            _scrollOffset = newScrollOffset;
+            ((ILogicalScrollable) this).RaiseScrollInvalidated(EventArgs.Empty);
+        }
+        else
+        {
+            // Shrink extent.
+            _scrollOffset = newScrollOffset;
+            ((ILogicalScrollable) this).RaiseScrollInvalidated(EventArgs.Empty);
+
+            Extent = newExtent;
+            Viewport = newViewport;
+            ((ILogicalScrollable) this).RaiseScrollInvalidated(EventArgs.Empty);
         }
     }
 
@@ -733,6 +831,8 @@ public class HexView : Control, ILogicalScrollable
             return false;
         }
 
+        UpdateLayout();
+
         ulong firstLineIndex = FullyVisibleRange.Start.ByteIndex / (ulong) ActualBytesPerLine;
         ulong lastLineIndex = (FullyVisibleRange.End.ByteIndex - 1) / (ulong) ActualBytesPerLine;
         ulong targetLineIndex = (location.ByteIndex - enclosingRange.Start.ByteIndex) / (ulong) ActualBytesPerLine;
@@ -744,7 +844,7 @@ public class HexView : Control, ILogicalScrollable
             ulong difference = targetLineIndex - lastLineIndex;
             newIndex = firstLineIndex + difference;
         }
-        else  if (location < FullyVisibleRange.Start)
+        else if (location < FullyVisibleRange.Start)
         {
             ulong difference = firstLineIndex - targetLineIndex;
             newIndex = firstLineIndex - difference;
@@ -768,6 +868,7 @@ public class HexView : Control, ILogicalScrollable
     private static void OnDocumentChanged(HexView view, AvaloniaPropertyChangedEventArgs arg2)
     {
         view._scrollOffset = default;
+        view._anchorByteIndex = null;
         view.InvalidateVisualLines();
 
         var oldDocument = (IBinaryDocument?) arg2.OldValue;
