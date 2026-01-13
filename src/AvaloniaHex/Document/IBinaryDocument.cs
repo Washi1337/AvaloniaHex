@@ -75,3 +75,25 @@ public interface IBinaryDocument : IDisposable
     /// </summary>
     void Flush();
 }
+
+/// <summary>
+/// Provides extensions to <see cref="IBinaryDocument"/>.
+/// </summary>
+public static class BinaryDocumentExtensions
+{
+    extension(IBinaryDocument document)
+    {
+        /// <summary>
+        /// Reads bytes from the document at the provided offset.
+        /// </summary>
+        /// <param name="offset">The offset to start reading at.</param>
+        /// <param name="count">The number of bytes to read.</param>
+        /// <returns>The read bytes.</returns>
+        public byte[] ReadBytes(ulong offset, int count)
+        {
+            byte[] result = new byte[count];
+            document.ReadBytes(offset, result);
+            return result;
+        }
+    }
+}
