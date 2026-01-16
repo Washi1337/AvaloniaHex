@@ -196,7 +196,7 @@ public class DynamicBinaryDocument : IBinaryDocument
                 // This is only possible if the current piece is situated at the end of the add-buffer and we're
                 // appending to the same chunk.
                 if (currentPiece.DataSource == PieceDataSource.Add
-                    && currentPiece.StartIndex == (ulong) _addBuffer.Count - currentPiece.Length - 1)
+                    && currentPiece.StartIndex == (ulong) _addBuffer.Count - currentPiece.Length - (ulong) buffer.Length)
                 {
                     _pieces[pieceIndex] = currentPiece with
                     {
