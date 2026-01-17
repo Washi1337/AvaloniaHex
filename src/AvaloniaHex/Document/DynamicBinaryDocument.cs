@@ -11,7 +11,7 @@ public class DynamicBinaryDocument : IBinaryDocument
     // Implementation is based on a piece table with some small optimizations where we merge pieces during
     // contiguous insertions and removals of pieces (i.e., happens a lot when typing character by character).
 
-    // TODO: support other backend storages (e.g., for files larger than 2GB)
+    // TODO: support other storage backends (e.g., for files larger than 2GB)
     private byte[] _data;
     private readonly List<byte> _addBuffer = [];
     private readonly List<Piece> _pieces = [];
@@ -79,7 +79,7 @@ public class DynamicBinaryDocument : IBinaryDocument
             _pieces.Add(new Piece(PieceDataSource.Original, 0ul, (ulong) _data.Length));
     }
 
-    private (int PieceIndex, ulong RelativeIndex) GetPieceIndex(ulong offset)
+    private (int PieceIndex, ulong RelativeIndex) GetPieceIndex(ulong requestedOffset)
     {
         // TODO: binary search / piece tree for faster lookup?
 
@@ -88,8 +88,8 @@ public class DynamicBinaryDocument : IBinaryDocument
         for (int i = 0; i < pieces.Length; i++)
         {
             var piece = pieces[i];
-            if (offset >= pieceOffset && offset <= pieceOffset + piece.Length)
-                return (i, offset - pieceOffset);
+            if (requestedOffset >= pieceOffset && requestedOffset <= pieceOffset + piece.Length)
+                return (i, requestedOffset - pieceOffset);
 
             pieceOffset += piece.Length;
         }
@@ -255,30 +255,31 @@ public class DynamicBinaryDocument : IBinaryDocument
 
             if (relativeIndex > 0)
             {
-                // We're removing starting from the middle of the piece, split piece before the starting index.
+                // We're trying to remove bytes from within the middle of the piece. Split piece before the starting index.
                 var (left, right) = _pieces[pieceIndex].Split(relativeIndex);
                 _pieces[pieceIndex] = left;
+
+                // We may not be removing the entire right piece, assume this to be the current piece now and continue.
                 pieceIndex++;
                 _pieces.Insert(pieceIndex, right);
-
                 currentPiece = right;
                 relativeIndex = 0;
             }
 
             if (currentPiece.Length > length)
             {
-                // We're removing only a part of the piece starting at the beginning. Split it up and remove the left part.
-                var (left, right) = _pieces[pieceIndex].Split(relativeIndex + length);
+                // We're removing bytes at the beginning of the piece. Split off the removed bytes and only preserve the right part.
+                var (left, right) = currentPiece.Split(relativeIndex + length);
                 _pieces[pieceIndex] = right;
                 length -= left.Length;
             }
             else
             {
-                // The entire piece is spanned by the length, remove it completely.
+                // The entire piece is encompassed by the range. Remove it completely.
                 _pieces.RemoveAt(pieceIndex);
                 length -= currentPiece.Length;
 
-                // Optimization: Remove also from add-buffer when possible to allow for merges later when inserting new pieces.
+                // Optimization: Remove also from the add-buffer when possible to allow for merges later when inserting new pieces.
                 if (currentPiece.DataSource == PieceDataSource.Add
                     && currentPiece.StartIndex == (ulong) _addBuffer.Count - currentPiece.Length)
                 {
