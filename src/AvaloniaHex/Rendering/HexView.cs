@@ -831,6 +831,8 @@ public class HexView : Control, ILogicalScrollable
             return false;
         }
 
+        // FullyVisibleRange and ActualBytesPerLine are calculated in Arrange. These values
+        // might be stale (IsArrangeValid == false). Make sure that the layout is up to date.
         UpdateLayout();
 
         ulong firstLineIndex = FullyVisibleRange.Start.ByteIndex / (ulong) ActualBytesPerLine;
