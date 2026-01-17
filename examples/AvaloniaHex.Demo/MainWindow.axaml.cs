@@ -12,7 +12,6 @@ using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 using AvaloniaHex.Document;
-using AvaloniaHex.Editing;
 using AvaloniaHex.Rendering;
 
 namespace AvaloniaHex.Demo
@@ -136,12 +135,17 @@ namespace AvaloniaHex.Demo
                 {
                     case MemoryBinaryDocument document:
                         await using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                        {
                             await fs.WriteAsync(document.Memory);
+                        }
                         break;
 
                     case DynamicBinaryDocument document:
                         await using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                        {
+                            document.Flush();
                             await fs.WriteAsync(document.ToArray());
+                        }
                         break;
 
                     case MemoryMappedBinaryDocument document:
