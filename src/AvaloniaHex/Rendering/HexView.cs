@@ -295,6 +295,10 @@ public class HexView : Control, ILogicalScrollable
         private set;
     }
 
+    bool IScrollable.CanHorizontallyScroll => ((ILogicalScrollable) this).CanHorizontallyScroll;
+
+    bool IScrollable.CanVerticallyScroll => ((ILogicalScrollable) this).CanVerticallyScroll;
+
     bool ILogicalScrollable.CanHorizontallyScroll { get; set; } = false;
 
     bool ILogicalScrollable.CanVerticallyScroll { get; set; } = true;

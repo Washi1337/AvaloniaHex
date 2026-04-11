@@ -456,7 +456,7 @@ namespace AvaloniaHex.Demo
             var dialog = new InputDialog
             {
                 Prompt = $"Fill {range} with byte sequence (hex):",
-                Watermark = "00 01 02 ...",
+                PlaceholderText = "00 01 02 ...",
                 IsValid = static s=> TryGetHexString(s) is not null,
             };
 

@@ -1,8 +1,6 @@
 using System;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Markup.Xaml;
 
 namespace AvaloniaHex.Demo;
 
@@ -25,10 +23,10 @@ public partial class InputDialog : Window
         set => InputTextBox.Text = value;
     }
 
-    public string? Watermark
+    public string? PlaceholderText
     {
-        get => InputTextBox.Watermark;
-        set => InputTextBox.Watermark = value;
+        get => InputTextBox.PlaceholderText;
+        set => InputTextBox.PlaceholderText = value;
     }
 
     public Predicate<string?> IsValid
