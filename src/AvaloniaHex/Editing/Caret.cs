@@ -195,7 +195,16 @@ public sealed class Caret
 
         ulong bytesPerLine = (ulong) HexView.ActualBytesPerLine;
         ulong lineIndex = (Location.ByteIndex - enclosingRange.Start.ByteIndex) / bytesPerLine;
+        ulong lastLineIndex = enclosingRange.End.ByteIndex / bytesPerLine;
 
+        // Select the virtual cell if we're at the last line.
+        if (lineIndex == lastLineIndex && PrimaryColumn is { } primaryColumn)
+        {
+            Location = primaryColumn.GetLastLocation(true);
+            return;
+        }
+
+        // Otherwise, select the last byte in the line.
         ulong byteIndex = Math.Min(
             enclosingRange.Start.ByteIndex + (lineIndex + 1) * bytesPerLine,
             enclosingRange.End.ByteIndex
